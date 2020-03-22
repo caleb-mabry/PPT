@@ -1,0 +1,19 @@
+{
+  "name": "ppt",
+  "version": "0.0.0",
+  "description": "A Discord Bot that is used to trackk the price per turnip throughout the week\"",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caleb-mabry/PPT.git"
+  },
+  "author": "OPERATION NOOK",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/caleb-mabry/PPT/issues"
+  },
+  "homepage": "https://github.com/caleb-mabry/PPT#readme"
+}
