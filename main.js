@@ -101,16 +101,16 @@ client.on("message", msg => {
     const channel = client.channels.cache.get("691491179732140053");
     async function f() {
         const myPromise = new Promise((res, rej) => {
-            setTimeout(() => res("./chart.png"), 1000)
+            setTimeout(() => res("./chart.png"), 5000)
         })
         let graphLocation = await myPromise
+        console.log(graphLocation)
         channel.send("Testing message", { files: [graphLocation] });
     }
     f()
-
   }
 });
 
-client.login("NjkxNDg5ODY5ODAwOTMxNDQw.Xngz3A.bj7JlzXrl8W3MTPsavZsWbkix0I");
+client.login(process.env.TOKEN);
 
 // REQUIRING BELOW AUTOMATICALLY CREATES CHART
