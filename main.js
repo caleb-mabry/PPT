@@ -1,1 +1,1 @@
-const chartFunc = require('./chart')
+const wonkyy = require('./chart')
