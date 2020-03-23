@@ -1,28 +1,28 @@
-require('dotenv').config()
+require("dotenv").config();
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
 const CURRENT_DAY = new Date().getDay();
 const COLORS = [
-    "White",
-    "Black",
-    "Yellow",
-    "Purple",
-    "Orange",
-    "#add8e6",
-    "#ff0000",
-    "#F0DC82",
-    "#808080"
-]
+  "White",
+  "Black",
+  "Yellow",
+  "Purple",
+  "Orange",
+  "#add8e6",
+  "#ff0000",
+  "#F0DC82",
+  "#808080"
+];
 const LABELS = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday"
-  ];
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];
 function makeGraph(json) {
   const fs = require("fs");
 
@@ -49,17 +49,22 @@ function makeGraph(json) {
       labels: LABELS,
       datasets: dataset
     },
+
     options: {
-      chartArea: {
-        backgroundColor: "white"
+      title: {
+        display: true,
+        text: "Price Per Turnip"
+      },
+      legend: {
+        display: true,
+        fontColor: "#fff"
       }
     }
   };
 
   const image = canvasRenderService.renderToBufferSync(configuration);
   fs.writeFileSync("chart.png", image);
-} 
-
+}
 
 /**
  * A helper function used to create a key value pair
@@ -71,7 +76,7 @@ function _makeNewContributor(author) {
   return {
     label: author,
     fill: false,
-    borderColor: "White",
+    borderColor: "",
     data: [null, null, null, null, null, null, null]
   };
 }
@@ -83,32 +88,31 @@ function _makeNewContributor(author) {
  * @param {The name of the JSON file to write to} filename
  * @param {The name of the Author} key
  * @param {The number the author supplied} value
- * @param {The function you would like to run after the JSON is written} callback 
+ * @param {The function you would like to run after the JSON is written} callback
  */
 function writeJson(filename, key, value, callback) {
-    let data = fs.readFileSync(filename)
-    
-    // Make new person if not exists
-    var json = JSON.parse(data);
-    if (!json[key]) json[key] = _makeNewContributor(key);
+  let data = fs.readFileSync(filename);
 
-    // Set Color of Inputter
-    let keyIndex = Object.keys(json).indexOf(key)
-    json[key].backgroundColor = COLORS[keyIndex]
+  // Make new person if not exists
+  var json = JSON.parse(data);
+  if (!json[key]) json[key] = _makeNewContributor(key);
 
-    // Set data of Inputter
-    json[key].data[CURRENT_DAY] = value;
+  // Set Color of Inputter
+  let keyIndex = Object.keys(json).indexOf(key);
+  json[key].backgroundColor = COLORS[keyIndex];
+  json[key].borderColor = COLORS[keyIndex];
+  // Set data of Inputter
+  json[key].data[CURRENT_DAY] = value;
 
-    // Write update to the JSON file
-    fs.writeFile(filename, JSON.stringify(json), function(err) {
-      if (err) throw err;
-    });
+  // Write update to the JSON file
+  fs.writeFile(filename, JSON.stringify(json), function(err) {
+    if (err) throw err;
+  });
 
-    makeGraph(json);
+  makeGraph(json);
 
-    callback()
-  };
-
+  callback();
+}
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -121,12 +125,21 @@ client.on("message", msg => {
 
     // Have sending chart as callback to run sync
     writeJson("output.json", AUTHOR, VALUE, function() {
-        const channel = client.channels.cache.get("691491179732140053");
-        channel.send("", { files: ['./chart.png'] });
+      const channel = client.channels.cache.get("691491179732140053");
+
+      channel.send("Lookup" + new Date(), { files: ["./chart.png"] });
     });
-    
-    
+  }
+  if (msg.author.bot) {
+    msg.channel.messages.fetch().then(messages =>
+      messages
+        .filter(m => m.author.bot)
+        .map(messager => {
+          if (messager.id != messager.author.lastMessageID) {
+             console.log(messager)
+          }
+        })
+    );
   }
 });
 client.login(process.env.TOKEN);
-
