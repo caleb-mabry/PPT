@@ -1,4 +1,4 @@
-require('dotenv').config()
+require("dotenv").config();
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
@@ -13,8 +13,8 @@ const COLORS = [
     "#ff0000",
     "#F0DC82",
     "#808080"
-]
-const LABELS = [
+];
+var LABELS = [
     "Sunday",
     "Monday",
     "Tuesday",
@@ -22,44 +22,67 @@ const LABELS = [
     "Thursday",
     "Friday",
     "Saturday"
-  ];
+];
+
 function makeGraph(json) {
-  const fs = require("fs");
+    const fs = require("fs");
 
-  // Create Initial Canvas
-  const { CanvasRenderService } = require("chartjs-node-canvas");
-  const width = 400; //px
-  const height = 400; //px
-  const canvasRenderService = new CanvasRenderService(
-    width,
-    height,
-    ChartJS => {}
-  );
+    // Create Initial Canvas
+    const { CanvasRenderService } = require("chartjs-node-canvas");
+    const width = 800; //px
+    const height = 400; //px
+    const canvasRenderService = new CanvasRenderService(
+        width,
+        height,
+        ChartJS => {
+            ChartJS.defaults.global.defaultFontColor = 'white';
+            ChartJS.plugins.register({
+                beforeDraw: function (chartInstance) {
+                    var ctx = chartInstance.chart.ctx;
+                    ctx.fillStyle = '#525252';
+                    ctx.fillRect(0, 0, chartInstance.chart.width, chartInstance.chart.height);
+                }
+            });
+        }
+    );
 
-  // Convert JSON to Array Object for Chart
-  var dataset = [];
-  const keys = Object.keys(json);
-  keys.forEach(item => {
-    dataset.push(json[item]);
-  });
+    // Convert JSON to Array Object for Chart
+    var dataset = [];
+    const keys = Object.keys(json);
+    keys.forEach(item => {
+        dataset.push(json[item]);
+    });
 
-  const configuration = {
-    type: "line",
-    data: {
-      labels: LABELS,
-      datasets: dataset
-    },
-    options: {
-      chartArea: {
-        backgroundColor: "white"
-      }
-    }
-  };
 
-  const image = canvasRenderService.renderToBufferSync(configuration);
-  fs.writeFileSync("chart.png", image);
-} 
 
+    const configuration = {
+        type: "line",
+        data: {
+            labels: LABELS,
+            datasets: dataset,
+            borderColor: 'rgb(255, 99, 132)'
+        },
+
+        options: {
+            elements: {
+                line: {
+                    tension: 0
+                }
+            },
+            title: {
+                display: true,
+                text: "Price Per Turnip"
+            },
+            legend: {
+                display: true,
+                fontColor: "white"
+            },
+        }
+    };
+
+    const image = canvasRenderService.renderToBufferSync(configuration);
+    fs.writeFileSync("chart.png", image);
+}
 
 /**
  * A helper function used to create a key value pair
@@ -68,12 +91,12 @@ function makeGraph(json) {
  * @param {The author of the message} author
  */
 function _makeNewContributor(author) {
-  return {
-    label: author,
-    fill: false,
-    borderColor: "White",
-    data: [null, null, null, null, null, null, null]
-  };
+    return {
+        label: author,
+        fill: false,
+        borderColor: "",
+        data: [null, null, null, null, null, null, null]
+    };
 }
 
 /**
@@ -83,50 +106,83 @@ function _makeNewContributor(author) {
  * @param {The name of the JSON file to write to} filename
  * @param {The name of the Author} key
  * @param {The number the author supplied} value
- * @param {The function you would like to run after the JSON is written} callback 
+ * @param {The function you would like to run after the JSON is written} callback
  */
-function writeJson(filename, key, value, callback) {
-    let data = fs.readFileSync(filename)
-    
+function writeJson(filename, key, value, day, callback) {
+    let data = fs.readFileSync(filename);
     // Make new person if not exists
     var json = JSON.parse(data);
     if (!json[key]) json[key] = _makeNewContributor(key);
 
     // Set Color of Inputter
-    let keyIndex = Object.keys(json).indexOf(key)
-    json[key].backgroundColor = COLORS[keyIndex]
-
+    let keyIndex = Object.keys(json).indexOf(key);
+    json[key].backgroundColor = COLORS[keyIndex];
+    json[key].borderColor = COLORS[keyIndex];
     // Set data of Inputter
-    json[key].data[CURRENT_DAY] = value;
+    console.log(day)
+    console.log(value)
+    if (day === '') {
+        json[key].data[CURRENT_DAY] = value;
+    } else {
+        json[key].data[day] = value;
+    }
+    console.log(json[key])
+
 
     // Write update to the JSON file
-    fs.writeFile(filename, JSON.stringify(json), function(err) {
-      if (err) throw err;
+    fs.writeFile(filename, JSON.stringify(json), function (err) {
+        if (err) throw err;
     });
 
     makeGraph(json);
 
-    callback()
-  };
-
+    callback();
+}
 
 client.on("ready", () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+    console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on("message", msg => {
-  if (msg.content.split(" ")[0].toLowerCase() === "!report") {
-    const AUTHOR = msg.author.username;
-    const VALUE = msg.content.split(" ")[1];
 
-    // Have sending chart as callback to run sync
-    writeJson("output.json", AUTHOR, VALUE, function() {
-        const channel = client.channels.cache.get("691491179732140053");
-        channel.send("", { files: ['./chart.png'] });
-    });
-    
-    
-  }
+    if (msg.content.split(" ")[0].toLowerCase() === "!report") {
+        const AUTHOR = msg.author.username;
+        const VALUE = msg.content.split(" ")[1];
+        let day = ''
+        if (msg.content.split(" ").length === 3) {
+            day = msg.content.split(" ")[2].toLowerCase()
+            const minLabel = LABELS.map(item => item.toLowerCase())
+            const minIndex = minLabel.indexOf(day)
+            if (minIndex <= CURRENT_DAY) {
+                day = minIndex
+            } else {
+                msg.delete()
+            }
+        }
+
+        // Have sending chart as callback to run sync
+        writeJson("output.json", AUTHOR, VALUE, day, function () {
+            const channel = client.channels.cache.get("691491179732140053");
+
+            channel.send(new Date(), { files: ["./chart.png"] });
+        });
+
+        // Delete the user message
+        msg.delete().then(message => {
+            console.log("Deleted" + message)
+        })
+
+    }
+    if (msg.author.bot) {
+        msg.channel.messages.fetch().then(messages =>
+            messages
+                .filter(m => m.author.bot)
+                .map(messager => {
+                    if (messager.id != msg.id) {
+                        messager.delete()
+                    }
+                })
+        );
+    }
 });
 client.login(process.env.TOKEN);
-
