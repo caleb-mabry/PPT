@@ -1,21 +1,20 @@
+require('dotenv').config()
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
 const CURRENT_DAY = new Date().getDay();
-function makeGraph(json) {
-  const fs = require("fs");
-
-
-  const { CanvasRenderService } = require("chartjs-node-canvas");
-
-  const width = 400; //px
-  const height = 400; //px
-  const canvasRenderService = new CanvasRenderService(
-    width,
-    height,
-    ChartJS => {}
-  );
-  const LABELS = [
+const COLORS = [
+    "White",
+    "Black",
+    "Yellow",
+    "Purple",
+    "Orange",
+    "#add8e6",
+    "#ff0000",
+    "#F0DC82",
+    "#808080"
+]
+const LABELS = [
     "Sunday",
     "Monday",
     "Tuesday",
@@ -24,6 +23,20 @@ function makeGraph(json) {
     "Friday",
     "Saturday"
   ];
+function makeGraph(json) {
+  const fs = require("fs");
+
+  // Create Initial Canvas
+  const { CanvasRenderService } = require("chartjs-node-canvas");
+  const width = 400; //px
+  const height = 400; //px
+  const canvasRenderService = new CanvasRenderService(
+    width,
+    height,
+    ChartJS => {}
+  );
+
+  // Convert JSON to Array Object for Chart
   var dataset = [];
   const keys = Object.keys(json);
   keys.forEach(item => {
@@ -70,24 +83,32 @@ function _makeNewContributor(author) {
  * @param {The name of the JSON file to write to} filename
  * @param {The name of the Author} key
  * @param {The number the author supplied} value
+ * @param {The function you would like to run after the JSON is written} callback 
  */
-function writeJson(filename, key, value) {
-  fs.readFile(filename, function(err, data) {
+function writeJson(filename, key, value, callback) {
+    let data = fs.readFileSync(filename)
+    
+    // Make new person if not exists
     var json = JSON.parse(data);
-    if (json[key]) {
-      console.log("Match");
-    } else {
-      json[key] = _makeNewContributor(key);
-    }
+    if (!json[key]) json[key] = _makeNewContributor(key);
+
+    // Set Color of Inputter
+    let keyIndex = Object.keys(json).indexOf(key)
+    json[key].backgroundColor = COLORS[keyIndex]
+
+    // Set data of Inputter
     json[key].data[CURRENT_DAY] = value;
 
-    //Write update to the JSON object
+    // Write update to the JSON file
     fs.writeFile(filename, JSON.stringify(json), function(err) {
       if (err) throw err;
     });
+
     makeGraph(json);
-  });
-}
+
+    callback()
+  };
+
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -97,20 +118,15 @@ client.on("message", msg => {
   if (msg.content.split(" ")[0].toLowerCase() === "!report") {
     const AUTHOR = msg.author.username;
     const VALUE = msg.content.split(" ")[1];
-    writeJson("output.json", AUTHOR, VALUE);
-    const channel = client.channels.cache.get("691491179732140053");
-    async function f() {
-        const myPromise = new Promise((res, rej) => {
-            setTimeout(() => res("./chart.png"), 5000)
-        })
-        let graphLocation = await myPromise
-        console.log(graphLocation)
-        channel.send("Testing message", { files: [graphLocation] });
-    }
-    f()
+
+    // Have sending chart as callback to run sync
+    writeJson("output.json", AUTHOR, VALUE, function() {
+        const channel = client.channels.cache.get("691491179732140053");
+        channel.send("", { files: ['./chart.png'] });
+    });
+    
+    
   }
 });
-
 client.login(process.env.TOKEN);
 
-// REQUIRING BELOW AUTOMATICALLY CREATES CHART
