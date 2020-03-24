@@ -4,9 +4,6 @@ require("moment-timezone");
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
-const CURRENT_DAY = new Date().getDay();
-const FORMATTED_DATE = `${new Date().getMonth() +
-    1}/${new Date().getDay()}/${new Date().getFullYear()}`;
 const startOfWeek = moment()
     .startOf("week")
     .format("MM/DD/YYYY");
@@ -155,6 +152,8 @@ function _makeNewContributor(author) {
  * @param {The function you would like to run after the JSON is written} callback
  */
 function writeJson(filename, key, value, day, callback) {
+    const CURRENT_DAY = new Date().getDay();
+
     try {
         var data = fs.readFileSync(filename);
     } catch {
@@ -194,6 +193,8 @@ client.on("message", msg => {
     if (msg.content.split(" ")[0].toLowerCase() === "!report") {
         const AUTHOR = msg.author.username;
         var VALUE = Math.round(Number(msg.content.split(" ")[1]));
+        const CURRENT_DAY = new Date().getDay();
+
         if (VALUE <= 0 || VALUE == NaN) {
             VALUE = null;
             msg.delete().then(message => {
@@ -214,9 +215,9 @@ client.on("message", msg => {
 
         // Have sending chart as callback to run sync
         writeJson(jsonFilename, AUTHOR, VALUE, day, function () {
-            const channel = client.channels.cache.get("691491179732140053");
+            const channel = client.channels.cache.get(process.env.CHANNEL);
 
-            channel.send(new Date(), { files: ["./chart.png"] });
+            channel.send('', { files: ["./chart.png"] });
         });
 
         // Delete the user message
