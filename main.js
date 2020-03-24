@@ -59,7 +59,32 @@ var LABELS = [
     "Friday",
     "Saturday"
 ];
-
+function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+function removeEmpty() {
+    var json = JSON.parse(fs.readFileSync(jsonFilename))
+    let keys = Object.keys(json)
+    keys.forEach(user => {
+        let notEmpty = false;
+        for (let i = 0; i < json[user].data.length; i++) {
+            if (json[user].data[i] != null) {
+                notEmpty = true
+            }
+        }
+        console.log('pit')
+        if (!notEmpty) {
+            console.log('in')
+            delete json[user]
+        }
+    })
+    return json
+}
 function makeGraph(json) {
     const fs = require("fs");
 
@@ -72,7 +97,6 @@ function makeGraph(json) {
         height,
         ChartJS => {
             ChartJS.defaults.global.defaultFontColor = "white";
-            console.log(ChartJS.defaults.global)
             ChartJS.plugins.register({
                 beforeDraw: function (chartInstance) {
 
@@ -114,7 +138,7 @@ function makeGraph(json) {
                         },
                         scaleLabel: {
                             display: true,
-                            labelString: "Month"
+                            labelString: "Day"
                         }
                     }
                 ],
@@ -126,7 +150,7 @@ function makeGraph(json) {
                         },
                         scaleLabel: {
                             display: true,
-                            labelString: "Value"
+                            labelString: "Bells per Turnip"
                         }
                     }
                 ]
@@ -193,8 +217,13 @@ function writeJson(filename, key, value, day, callback) {
 
     // Set Color of Inputter
     let keyIndex = Object.keys(json).indexOf(key);
-    json[key].backgroundColor = COLORS[keyIndex];
-    json[key].borderColor = COLORS[keyIndex];
+    try {
+        json[key].backgroundColor = COLORS[keyIndex];
+        json[key].borderColor = COLORS[keyIndex];
+    } catch {
+        json[key].backgroundColor = getRandomColor();
+        json[key].borderColor = getRandomColor();
+    }
     // Set data of Inputter
     if (day === "") {
         json[key].data[CURRENT_DAY] = value;
@@ -202,10 +231,10 @@ function writeJson(filename, key, value, day, callback) {
         json[key].data[day] = value;
     }
 
+
     // Write update to the JSON file
-    fs.writeFile(filename, JSON.stringify(json), function (err) {
-        if (err) throw err;
-    });
+    fs.writeFileSync(filename, JSON.stringify(json));
+    json = removeEmpty();
 
     makeGraph(json);
 
@@ -217,7 +246,7 @@ client.on("ready", () => {
 });
 
 client.on("message", msg => {
-    if (msg.content.split(" ")[0].toLowerCase() === "!report") {
+    if (msg.content.split(" ")[0].toLowerCase() === "report") {
         const AUTHOR = msg.author.username;
         var VALUE = Math.round(Number(msg.content.split(" ")[1]));
         const CURRENT_DAY = new Date().getDay();
@@ -226,7 +255,8 @@ client.on("message", msg => {
             VALUE = null;
             msg.delete().then(message => {
                 console.log("Deleted", message);
-            });
+            }).catch(err => console.log(err));
+            return
         }
         let day = "";
         if (msg.content.split(" ").length === 3) {
@@ -243,7 +273,6 @@ client.on("message", msg => {
         // Have sending chart as callback to run sync
         writeJson(jsonFilename, AUTHOR, VALUE, day, function () {
             const channel = client.channels.cache.get(process.env.CHANNEL);
-
             channel.send('', { files: ["./chart.png"] });
         });
 
@@ -266,7 +295,7 @@ client.on("message", msg => {
                         messager.delete();
                     }
                 })
-        );
+        ).catch(err => console.log(err))
     } else {
         msg.delete();
     }
