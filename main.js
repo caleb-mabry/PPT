@@ -246,7 +246,7 @@ client.on("ready", () => {
 });
 
 client.on("message", msg => {
-    if (msg.content.split(" ")[0].toLowerCase() === "report") {
+    if (msg.content.split(" ")[0].toLowerCase() === "!report") {
         const AUTHOR = msg.author.username;
         var VALUE = Math.round(Number(msg.content.split(" ")[1]));
         const CURRENT_DAY = new Date().getDay();
