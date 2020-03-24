@@ -19,10 +19,37 @@ const COLORS = [
     "Purple",
     "Orange",
     "#add8e6",
+    //Light Blue
     "#ff0000",
-    "#F0DC82",
-    "#808080"
+    //Red
+    "#ff85d8",
+    //Pink
+    "#00d92b",
+    //Bright Green
+    "#0009ba",
+    //Dark Blue
+    "#690000",
+    //Burgundy
+    "#005406",
+    //Forest Green
+    "#9c9400",
+    //Gold
+    "#87430f",
+    //Brown
+    "#a8315d",
+    //Magenta
+    "#a95de3",
+    //Lavender
+    "#00b093",
+    //Teal
+    "#c9be99",
+    //Tan
+    "#c75d5d",
+    //Light Red
+    "#abffc4",
+    //Mint
 ];
+
 var LABELS = [
     "Sunday",
     "Monday",
