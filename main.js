@@ -50,13 +50,13 @@ const COLORS = [
   //Mint
 ];
 const DAYLOOKUP = {
-    0: 'Sunday',
-    1: 'Monday',
-    2: 'Tuesday',
-    3: 'Wednesday',
-    4: 'Thursday',
-    5: 'Friday',
-    6: 'Saturday'
+  0: 'Sunday',
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday'
 }
 var LABELS = [
   "Sunday-AM",
@@ -112,7 +112,7 @@ function makeGraph(json) {
     ChartJS => {
       ChartJS.defaults.global.defaultFontColor = "white";
       ChartJS.plugins.register({
-        beforeDraw: function(chartInstance) {
+        beforeDraw: function (chartInstance) {
           var ctx = chartInstance.chart.ctx;
           ctx.fillStyle = "#525252";
           ctx.fillRect(
@@ -232,7 +232,7 @@ function _makeNewContributor(author) {
  * @param {The number the author supplied} value
  * @param {The function you would like to run after the JSON is written} callback
  */
-function writeJson(filename, key, value, day,msg, callback) {
+function writeJson(filename, key, value, day, msg, callback) {
   const CURRENT_DAY = new Date().getDay();
 
   try {
@@ -257,10 +257,10 @@ function writeJson(filename, key, value, day,msg, callback) {
   // Set data of Inputter
   if (day === "") {
     day = DAYLOOKUP[CURRENT_DAY]
-    if(msg.createdAt.getHours() >= 12) {
-        day += '-PM'
+    if (msg.createdAt.getHours() >= 12) {
+      day += '-PM'
     } else {
-        day += '-AM'
+      day += '-AM'
     }
     let dataKey = LABELS.indexOf(day)
     json[key].data[dataKey] = value;
@@ -305,16 +305,16 @@ client.on("message", msg => {
         day = msg.content.split(" ")[2].toLowerCase();
         const minLabel = LABELS.map(item => item.toLowerCase());
         if (!day.split('-')[1]) {
-            if(msg.createdAt.getHours() >= 12) {
-                day += '-pm'
-            } else {
-                day += '-am'
-            }
+          if (msg.createdAt.getHours() >= 12) {
+            day += '-pm'
+          } else {
+            day += '-am'
+          }
         }
         const minIndex = minLabel.indexOf(day);
 
 
-        let thing = DAYLOOKUP[CURRENT_DAY]+'-pm'
+        let thing = DAYLOOKUP[CURRENT_DAY] + '-pm'
 
 
 
@@ -325,7 +325,7 @@ client.on("message", msg => {
         }
       }
       // Have sending chart as callback to run sync
-      writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function() {
+      writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function () {
         const channel = client.channels.cache.get(process.env.CHANNEL);
         channel.send("", { files: ["./chart.png"] });
       });
@@ -339,23 +339,24 @@ client.on("message", msg => {
         .catch(error => {
           console.log("Unable to delete ", error);
         });
-      if (msg.author.bot) {
-        msg.channel.messages
-          .fetch()
-          .then(messages =>
-            messages
-              .filter(m => m.author.bot)
-              .map(messager => {
-                if (messager.id != msg.id) {
-                  messager.delete();
-                }
-              })
-          )
-          .catch(err => console.log(err));
-      } else {
-        msg.delete();
-      }
     }
+  }
+  if (msg.author.bot) {
+    msg.channel.messages
+      .fetch()
+      .then(messages =>
+        messages
+
+          .filter(m => m.author.bot)
+          .map(messager => {
+            if (messager.id != msg.id) {
+              messager.delete().then(message => console.log('Deleted ', message));
+            }
+          })
+      )
+      .catch(err => console.log(err));
+  } else {
+    msg.delete().then(message => console.log('Deleted ', message)).catch(err => console.log(err));
   }
 });
 client.login(process.env.TOKEN);
