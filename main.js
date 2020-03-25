@@ -5,177 +5,192 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
 const startOfWeek = moment()
-    .startOf("week")
-    .format("MM/DD/YYYY");
+  .startOf("week")
+  .format("MM/DD/YYYY");
 const jsonFilename =
-    moment()
-        .startOf("week")
-        .format("MM-DD-YYYY") + ".json";
+  moment()
+    .startOf("week")
+    .format("MM-DD-YYYY") + ".json";
 
 const COLORS = [
-    "White",
-    "Black",
-    "Yellow",
-    "Purple",
-    "Orange",
-    "#add8e6",
-    //Light Blue
-    "#ff0000",
-    //Red
-    "#ff85d8",
-    //Pink
-    "#00d92b",
-    //Bright Green
-    "#0009ba",
-    //Dark Blue
-    "#690000",
-    //Burgundy
-    "#005406",
-    //Forest Green
-    "#9c9400",
-    //Gold
-    "#87430f",
-    //Brown
-    "#a8315d",
-    //Magenta
-    "#a95de3",
-    //Lavender
-    "#00b093",
-    //Teal
-    "#c9be99",
-    //Tan
-    "#c75d5d",
-    //Light Red
-    "#abffc4",
-    //Mint
+  "White",
+  "Black",
+  "Yellow",
+  "Purple",
+  "Orange",
+  "#add8e6",
+  //Light Blue
+  "#ff0000",
+  //Red
+  "#ff85d8",
+  //Pink
+  "#00d92b",
+  //Bright Green
+  "#0009ba",
+  //Dark Blue
+  "#690000",
+  //Burgundy
+  "#005406",
+  //Forest Green
+  "#9c9400",
+  //Gold
+  "#87430f",
+  //Brown
+  "#a8315d",
+  //Magenta
+  "#a95de3",
+  //Lavender
+  "#00b093",
+  //Teal
+  "#c9be99",
+  //Tan
+  "#c75d5d",
+  //Light Red
+  "#abffc4"
+  //Mint
+];
+const DAYLOOKUP = {
+    0: 'Sunday',
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+    6: 'Saturday'
+}
+var LABELS = [
+  "Sunday-AM",
+  "Sunday-PM",
+  "Monday-AM",
+  "Monday-PM",
+  "Tuesday-AM",
+  "Tuesday-PM",
+  "Wednesday-AM",
+  "Wednesday-PM",
+  "Thursday-AM",
+  "Thursday-PM",
+  "Friday-AM",
+  "Friday-PM",
+  "Saturday-AM",
+  "Saturday-PM"
 ];
 
-var LABELS = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday"
-];
 function getRandomColor() {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
+  var letters = "0123456789ABCDEF";
+  var color = "#";
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
 function removeEmpty() {
-    var json = JSON.parse(fs.readFileSync(jsonFilename))
-    let keys = Object.keys(json)
-    keys.forEach(user => {
-        let notEmpty = false;
-        for (let i = 0; i < json[user].data.length; i++) {
-            if (json[user].data[i] != null) {
-                notEmpty = true
-            }
-        }
-        console.log('pit')
-        if (!notEmpty) {
-            console.log('in')
-            delete json[user]
-        }
-    })
-    return json
+  var json = JSON.parse(fs.readFileSync(jsonFilename));
+  let keys = Object.keys(json);
+  keys.forEach(user => {
+    let notEmpty = false;
+    for (let i = 0; i < json[user].data.length; i++) {
+      if (json[user].data[i] != null) {
+        notEmpty = true;
+      }
+    }
+    if (!notEmpty) {
+      delete json[user];
+    }
+  });
+  return json;
 }
 function makeGraph(json) {
-    const fs = require("fs");
+  const fs = require("fs");
 
-    // Create Initial Canvas
-    const { CanvasRenderService } = require("chartjs-node-canvas");
-    const width = 800; //px
-    const height = 400; //px
-    const canvasRenderService = new CanvasRenderService(
-        width,
-        height,
-        ChartJS => {
-            ChartJS.defaults.global.defaultFontColor = "white";
-            ChartJS.plugins.register({
-                beforeDraw: function (chartInstance) {
-
-                    var ctx = chartInstance.chart.ctx;
-                    ctx.fillStyle = "#525252";
-                    ctx.fillRect(
-                        0,
-                        0,
-                        chartInstance.chart.width,
-                        chartInstance.chart.height
-                    );
-                }
-            });
+  // Create Initial Canvas
+  const { CanvasRenderService } = require("chartjs-node-canvas");
+  const width = 800; //px
+  const height = 400; //px
+  const canvasRenderService = new CanvasRenderService(
+    width,
+    height,
+    ChartJS => {
+      ChartJS.defaults.global.defaultFontColor = "white";
+      ChartJS.plugins.register({
+        beforeDraw: function(chartInstance) {
+          var ctx = chartInstance.chart.ctx;
+          ctx.fillStyle = "#525252";
+          ctx.fillRect(
+            0,
+            0,
+            chartInstance.chart.width,
+            chartInstance.chart.height
+          );
         }
-    );
+      });
+    }
+  );
 
-    // Convert JSON to Array Object for Chart
-    var dataset = [];
-    const keys = Object.keys(json);
-    keys.forEach(item => {
-        dataset.push(json[item]);
-    });
+  // Convert JSON to Array Object for Chart
+  var dataset = [];
+  const keys = Object.keys(json);
+  keys.forEach(item => {
+    dataset.push(json[item]);
+  });
 
-    const configuration = {
-        type: "line",
-        data: {
-            labels: LABELS,
-            datasets: dataset
-        },
+  const configuration = {
+    type: "line",
+    data: {
+      labels: LABELS,
+      datasets: dataset
+    },
 
-        options: {
-
-            scales: {
-                xAxes: [
-                    {
-                        display: true,
-                        gridLines: {
-                            display: true
-                        },
-                        scaleLabel: {
-                            display: true,
-                            labelString: "Day"
-                        }
-                    }
-                ],
-                yAxes: [
-                    {
-                        display: true,
-                        gridLines: {
-                            display: true
-                        },
-                        scaleLabel: {
-                            display: true,
-                            labelString: "Bells per Turnip"
-                        }
-                    }
-                ]
+    options: {
+      scales: {
+        xAxes: [
+          {
+            display: true,
+            gridLines: {
+              display: true
             },
-
-            elements: {
-                line: {
-                    tension: 0
-                }
-            },
-            title: {
-                display: true,
-                text: "Sow Joan's Index - Week of " + startOfWeek
-            },
-            legend: {
-                labels: {
-                    // This more specific font property overrides the global property
-                    fontColor: 'white'
-                }
+            scaleLabel: {
+              display: true,
+              labelString: "Time"
             }
-        }
-    };
+          }
+        ],
+        yAxes: [
+          {
+            display: true,
+            gridLines: {
+              display: true
+            },
+            scaleLabel: {
+              display: true,
+              labelString: "Bells per Turnip"
+            }
+          }
+        ]
+      },
 
-    const image = canvasRenderService.renderToBufferSync(configuration);
-    fs.writeFileSync("chart.png", image);
+      elements: {
+        line: {
+          tension: 0
+        }
+      },
+      spanGaps: {
+        display: true
+      },
+      title: {
+        display: true,
+        text: "Sow Joan's Index - Week of " + startOfWeek
+      },
+      legend: {
+        labels: {
+          // This more specific font property overrides the global property
+          fontColor: "white"
+        }
+      }
+    }
+  };
+
+  const image = canvasRenderService.renderToBufferSync(configuration);
+  fs.writeFileSync("chart.png", image);
 }
 
 /**
@@ -185,12 +200,27 @@ function makeGraph(json) {
  * @param {The author of the message} author
  */
 function _makeNewContributor(author) {
-    return {
-        label: author,
-        fill: false,
-        borderColor: "",
-        data: [null, null, null, null, null, null, null]
-    };
+  return {
+    label: author,
+    fill: false,
+    borderColor: "",
+    data: [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  };
 }
 
 /**
@@ -202,102 +232,130 @@ function _makeNewContributor(author) {
  * @param {The number the author supplied} value
  * @param {The function you would like to run after the JSON is written} callback
  */
-function writeJson(filename, key, value, day, callback) {
-    const CURRENT_DAY = new Date().getDay();
+function writeJson(filename, key, value, day,msg, callback) {
+  const CURRENT_DAY = new Date().getDay();
 
-    try {
-        var data = fs.readFileSync(filename);
-    } catch {
-        fs.writeFileSync(filename, JSON.stringify({}));
-        var data = fs.readFileSync(filename);
-    }
-    // Make new person if not exists
-    var json = JSON.parse(data);
-    if (!json[key]) json[key] = _makeNewContributor(key);
+  try {
+    var data = fs.readFileSync(filename);
+  } catch {
+    fs.writeFileSync(filename, JSON.stringify({}));
+    var data = fs.readFileSync(filename);
+  }
+  // Make new person if not exists
+  var json = JSON.parse(data);
+  if (!json[key]) json[key] = _makeNewContributor(key);
 
-    // Set Color of Inputter
-    let keyIndex = Object.keys(json).indexOf(key);
-    try {
-        json[key].backgroundColor = COLORS[keyIndex];
-        json[key].borderColor = COLORS[keyIndex];
-    } catch {
-        json[key].backgroundColor = getRandomColor();
-        json[key].borderColor = getRandomColor();
-    }
-    // Set data of Inputter
-    if (day === "") {
-        json[key].data[CURRENT_DAY] = value;
+  // Set Color of Inputter
+  let keyIndex = Object.keys(json).indexOf(key);
+  try {
+    json[key].backgroundColor = COLORS[keyIndex];
+    json[key].borderColor = COLORS[keyIndex];
+  } catch {
+    json[key].backgroundColor = getRandomColor();
+    json[key].borderColor = getRandomColor();
+  }
+  // Set data of Inputter
+  if (day === "") {
+    day = DAYLOOKUP[CURRENT_DAY]
+    if(msg.createdAt.getHours() >= 12) {
+        day += '-PM'
     } else {
-        json[key].data[day] = value;
+        day += '-AM'
     }
+    let dataKey = LABELS.indexOf(day)
+    json[key].data[dataKey] = value;
+  } else {
+    json[key].data[day] = value;
+  }
 
 
-    // Write update to the JSON file
-    fs.writeFileSync(filename, JSON.stringify(json));
-    json = removeEmpty();
+  // Write update to the JSON file
+  fs.writeFileSync(filename, JSON.stringify(json));
+  json = removeEmpty();
 
-    makeGraph(json);
+  makeGraph(json);
 
-    callback();
+  callback();
 }
 
 client.on("ready", () => {
-    console.log(`Logged in as ${client.user.tag}!`);
+  console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on("message", msg => {
-    if (msg.content.split(" ")[0].toLowerCase() === "!report") {
-        const AUTHOR = msg.author.username;
-        var VALUE = Math.round(Number(msg.content.split(" ")[1]));
-        const CURRENT_DAY = new Date().getDay();
+  if (msg.content.split(" ")[0].toLowerCase() === "report") {
+    if (msg.channel.id === process.env.CHANNEL) {
+      const AUTHOR = msg.author.username;
+      var VALUE = Math.round(Number(msg.content.split(" ")[1]));
+      const CURRENT_DAY = new Date().getDay();
 
-        if (VALUE <= 0 || VALUE == NaN) {
-            VALUE = null;
-            msg.delete().then(message => {
-                console.log("Deleted", message);
-            }).catch(err => console.log(err));
-            return
-        }
-        let day = "";
-        if (msg.content.split(" ").length === 3) {
-            day = msg.content.split(" ")[2].toLowerCase();
-            const minLabel = LABELS.map(item => item.toLowerCase());
-            const minIndex = minLabel.indexOf(day);
-            if (minIndex <= CURRENT_DAY) {
-                day = minIndex;
+      if (VALUE <= 0 || VALUE == NaN) {
+        VALUE = null;
+        msg
+          .delete()
+          .then(message => {
+            console.log("Deleted", message);
+          })
+          .catch(err => console.log(err));
+        return;
+      }
+
+      let day = "";
+      if (msg.content.split(" ").length === 3) {
+        day = msg.content.split(" ")[2].toLowerCase();
+        const minLabel = LABELS.map(item => item.toLowerCase());
+        if (!day.split('-')[1]) {
+            if(msg.createdAt.getHours() >= 12) {
+                day += '-pm'
             } else {
-                msg.delete();
+                day += '-am'
             }
         }
+        const minIndex = minLabel.indexOf(day);
 
-        // Have sending chart as callback to run sync
-        writeJson(jsonFilename, AUTHOR, VALUE, day, function () {
-            const channel = client.channels.cache.get(process.env.CHANNEL);
-            channel.send('', { files: ["./chart.png"] });
+
+        let thing = DAYLOOKUP[CURRENT_DAY]+'-pm'
+
+
+
+        if (minIndex <= minLabel.indexOf(thing.toLowerCase())) {
+          day = minIndex;
+        } else {
+          msg.delete();
+        }
+      }
+      // Have sending chart as callback to run sync
+      writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function() {
+        const channel = client.channels.cache.get(process.env.CHANNEL);
+        channel.send("", { files: ["./chart.png"] });
+      });
+      // Delete the user message
+
+      msg
+        .delete()
+        .then(message => {
+          console.log("Deleted " + message);
+        })
+        .catch(error => {
+          console.log("Unable to delete ", error);
         });
-
-        // Delete the user message
-        msg
-            .delete()
-            .then(message => {
-                console.log("Deleted " + message);
-            })
-            .catch(error => {
-                console.log("Unable to delte", message);
-            });
-    }
-    if (msg.author.bot) {
-        msg.channel.messages.fetch().then(messages =>
+      if (msg.author.bot) {
+        msg.channel.messages
+          .fetch()
+          .then(messages =>
             messages
-                .filter(m => m.author.bot)
-                .map(messager => {
-                    if (messager.id != msg.id) {
-                        messager.delete();
-                    }
-                })
-        ).catch(err => console.log(err))
-    } else {
+              .filter(m => m.author.bot)
+              .map(messager => {
+                if (messager.id != msg.id) {
+                  messager.delete();
+                }
+              })
+          )
+          .catch(err => console.log(err));
+      } else {
         msg.delete();
+      }
     }
+  }
 });
 client.login(process.env.TOKEN);
