@@ -1,4 +1,10 @@
+// Pull in environmental variables
 require("dotenv").config();
+
+// Pull in configuration information
+const { prefix } = require('./config.json');
+
+
 let moment = require("moment");
 require("moment-timezone");
 const Discord = require("discord.js");
@@ -283,7 +289,18 @@ client.on("ready", () => {
 });
 
 client.on("message", msg => {
-  if (msg.content.split(" ")[0].toLowerCase() === "!report") {
+  if (!msg.content.startsWith(prefix)) {
+    msg.delete()
+    .then(success => console.log('Deleted non command:', success.content))
+    .catch(error => console.log('Unable to delete non command:', error))
+  };
+
+  // Args is everything after the command. This is because of shift()
+  const args = message.content.slice(prefix.length).split(' ');
+  const command = args.shift().toLowerCase();
+
+  // If the message being sent on the server is a command for the bot
+  if (command === "report") {
     if (msg.channel.id === process.env.CHANNEL) {
       const AUTHOR = msg.author.username;
       var VALUE = Math.round(Number(msg.content.split(" ")[1]));
@@ -341,22 +358,23 @@ client.on("message", msg => {
         });
     }
   }
+
+  // If the message being sent on the server is a command for the bot
   if (msg.author.bot) {
     msg.channel.messages
       .fetch()
       .then(messages =>
         messages
-
           .filter(m => m.author.bot)
           .map(messager => {
             if (messager.id != msg.id) {
-              messager.delete().then(message => console.log('Deleted ', message));
+              messager.delete().then(message => console.log('Deleted the previous bots message ', message)).catch(err => console.log('Unable to delete the previous bots message ', err));
             }
           })
       )
       .catch(err => console.log(err));
   } else {
-    msg.delete().then(message => console.log('Deleted ', message)).catch(err => console.log(err));
+    msg.delete().then(message => console.log('Deleted message because was not a bot response ', message.content)).catch(err => console.log('Error deleting users message becuase not a bot ', err));
   }
 });
 client.login(process.env.TOKEN);
