@@ -280,8 +280,19 @@ function writeJson(filename, key, value, day, msg, callback) {
   json = removeEmpty();
 
   makeGraph(json);
-
-  callback();
+  const keys = Object.keys(json)
+  var max = {
+    user: "",
+    value: 0
+  }
+  for (let i = 0; i < keys.length; i++) {
+    let maxValue = (Math.max(...json[keys[i]].data))
+    if (max.value < maxValue) {
+      max.user = keys[i];
+      max.value = maxValue
+    }
+  }
+  callback(max);
 }
 
 client.on("ready", () => {
@@ -317,7 +328,7 @@ client.on("message", msg => {
   }
 
   // Args is everything after the command. This is because of shift()
-  const args = msg.content.slice(prefix.length).split(' ');
+  const args = msg.content.slice(prefix.length).split(/ +/);
   const command = args.shift().toLowerCase();
 
   // If number is NaN or less than 0
@@ -333,63 +344,63 @@ client.on("message", msg => {
 
   // If the message being sent on the server is a command for the bot
   if (command === "report") {
-    if (msg.channel.id === process.env.CHANNEL) {
-      const AUTHOR = msg.author.username;
-      var VALUE = Math.round(Number(args[0]));
-      const CURRENT_DAY = new Date().getDay();
 
-      let day = "";
+    const AUTHOR = msg.author.username;
+    var VALUE = Math.round(Number(args[0]));
+    const CURRENT_DAY = new Date().getDay();
 
-      // User specified a time
-      if (args.length === 2) {
-        day = args[1].toLowerCase();
-        const minLabel = LABELS.map(item => item.toLowerCase());
+    let day = "";
 
-        // If the day does not have a dash
-        if (!day.split('-')[1]) {
-          if (msg.createdAt.getHours() >= 12) {
-            day += '-pm'
-          } else {
-            day += '-am'
-          }
-        }
-        
-        const minTimeIndex = minLabel.indexOf(day);
-        if (minTimeIndex === -1) {
-          msg.delete()
-          .then(message => console.log('Day does not match any in index: ', message.content))
-          .catch(error => console.log('Unable to delete index mismatch: ', error))
-          return
-        }
-        const maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + '-pm'
+    // User specified a time
+    if (args.length === 2) {
+      day = args[1].toLowerCase();
+      const minLabel = LABELS.map(item => item.toLowerCase());
 
-        // Do not allow users to write to the future
-        if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
-          day = minTimeIndex;
+      // If the day does not have a dash
+      if (!day.split('-')[1]) {
+        if (msg.createdAt.getHours() >= 12) {
+          day += '-pm'
         } else {
-          msg.delete()
-            .then(message => console.log('You cannot write to the future: ', message.content))
-            .catch(error => console.log('Unable to delete future message: ', error))
-            return;
+          day += '-am'
         }
       }
 
-      // Have sending chart as callback to run sync
-      writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function () {
-        const channel = client.channels.cache.get(process.env.CHANNEL);
-        channel.send("", { files: ["./chart.png"] });
-      });
-      // Delete the user message
+      const minTimeIndex = minLabel.indexOf(day);
+      if (minTimeIndex === -1) {
+        msg.delete()
+          .then(message => console.log('Day does not match any in index: ', message.content))
+          .catch(error => console.log('Unable to delete index mismatch: ', error))
+        return
+      }
+      const maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + '-pm'
 
-      msg
-        .delete()
-        .then(message => {
-          console.log("Deleted because done:" + message.content);
-        })
-        .catch(error => {
-          console.log("Unable to delete ", error);
-        });
+      // Do not allow users to write to the future
+      if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
+        day = minTimeIndex;
+      } else {
+        msg.delete()
+          .then(message => console.log('You cannot write to the future: ', message.content))
+          .catch(error => console.log('Unable to delete future message: ', error))
+        return;
+      }
     }
+
+    // Have sending chart as callback to run sync
+    writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
+      // const channel = client.channels.cache.get(process.env.CHANNEL);
+      msg.channel.send(`${AUTHOR} just posted ${VALUE}!\nThe max turnip seller is ${max.user} with a value of ${max.value}!`, { files: ["./chart.png"] });
+    });
+    // Delete the user message
+
+    msg
+      .delete()
+      .then(message => {
+        console.log("Deleted because done:" + message.content);
+      })
+      .catch(error => {
+        console.log("Unable to delete ", error);
+      });
+
   } else {
     msg.delete()
       .then(message => console.log('Deleted non existant command:', message.content))
