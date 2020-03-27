@@ -321,7 +321,7 @@ client.on("message", msg => {
   const command = args.shift().toLowerCase();
 
   // If number is NaN or less than 0
-  if (isNaN(args[0]) || args[0] <= 0) {
+  if (args[0] === null && isNaN(args[0]) || args[0] <= 0 || args[0] >= 800) {
     msg
       .delete()
       .then(message => {
