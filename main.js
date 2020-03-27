@@ -268,7 +268,7 @@ function writeJson(filename, key, value, day, msg, callback) {
     } else {
       day += '-AM'
     }
-    let dataKey = LABELS.indexOf(day)
+    var dataKey = LABELS.indexOf(day)
     json[key].data[dataKey] = value;
   } else {
     json[key].data[day] = value;
@@ -286,7 +286,7 @@ function writeJson(filename, key, value, day, msg, callback) {
     value: 0
   }
   for (let i = 0; i < keys.length; i++) {
-    let maxValue = (Math.max(...json[keys[i]].data))
+    let maxValue = json[keys[i]].data[dataKey]
     if (max.value < maxValue) {
       max.user = keys[i];
       max.value = maxValue
