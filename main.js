@@ -13,7 +13,7 @@ const fs = require("fs");
 const startOfWeek = moment()
   .startOf("week")
   .format("MM/DD/YYYY");
-const jsonFilename =
+const jsonFilename = './json/' +
   moment()
     .startOf("week")
     .format("MM-DD-YYYY") + ".json";
@@ -289,38 +289,63 @@ client.on("ready", () => {
 });
 
 client.on("message", msg => {
-  if (!msg.content.startsWith(prefix)) {
+  if (!msg.content.startsWith(prefix) && !msg.author.bot) {
     msg.delete()
-    .then(success => console.log('Deleted non command:', success.content))
-    .catch(error => console.log('Unable to delete non command:', error))
+      .then(success => console.log('Deleted non command:', success.content))
+      .catch(error => console.log('Unable to delete non command:', error))
+    return;
   };
 
+  // If the message being sent on the server is a command for the bot
+  if (msg.author.bot) {
+    // Checks channel for messages, deletes if not bots prev message
+    msg.channel.messages
+      .fetch()
+      .then(messages =>
+        messages
+          .filter(m => m.author.bot)
+          .map(messager => {
+            if (messager.id != msg.id) {
+              messager.delete()
+                .then(message => console.log('Deleted the previous bots message ', message.content))
+                .catch(err => console.log('Unable to delete the previous bots message ', err));
+            }
+          })
+      )
+      .catch(err => console.log(err));
+    return
+  }
+
   // Args is everything after the command. This is because of shift()
-  const args = message.content.slice(prefix.length).split(' ');
+  const args = msg.content.slice(prefix.length).split(' ');
   const command = args.shift().toLowerCase();
+
+  // If number is NaN or less than 0
+  if (isNaN(args[0]) || args[0] <= 0) {
+    msg
+      .delete()
+      .then(message => {
+        console.log("Deleted the NaN:", message.content);
+      })
+      .catch(err => console.log(err));
+    return;
+  }
 
   // If the message being sent on the server is a command for the bot
   if (command === "report") {
     if (msg.channel.id === process.env.CHANNEL) {
       const AUTHOR = msg.author.username;
-      var VALUE = Math.round(Number(msg.content.split(" ")[1]));
+      var VALUE = Math.round(Number(args[0]));
       const CURRENT_DAY = new Date().getDay();
 
-      if (VALUE <= 0 || VALUE == NaN) {
-        VALUE = null;
-        msg
-          .delete()
-          .then(message => {
-            console.log("Deleted", message);
-          })
-          .catch(err => console.log(err));
-        return;
-      }
-
       let day = "";
-      if (msg.content.split(" ").length === 3) {
-        day = msg.content.split(" ")[2].toLowerCase();
+
+      // User specified a time
+      if (args.length === 2) {
+        day = args[1].toLowerCase();
         const minLabel = LABELS.map(item => item.toLowerCase());
+
+        // If the day does not have a dash
         if (!day.split('-')[1]) {
           if (msg.createdAt.getHours() >= 12) {
             day += '-pm'
@@ -328,19 +353,27 @@ client.on("message", msg => {
             day += '-am'
           }
         }
-        const minIndex = minLabel.indexOf(day);
+        
+        const minTimeIndex = minLabel.indexOf(day);
+        if (minTimeIndex === -1) {
+          msg.delete()
+          .then(message => console.log('Day does not match any in index: ', message.content))
+          .catch(error => console.log('Unable to delete index mismatch: ', error))
+          return
+        }
+        const maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + '-pm'
 
-
-        let thing = DAYLOOKUP[CURRENT_DAY] + '-pm'
-
-
-
-        if (minIndex <= minLabel.indexOf(thing.toLowerCase())) {
-          day = minIndex;
+        // Do not allow users to write to the future
+        if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
+          day = minTimeIndex;
         } else {
-          msg.delete();
+          msg.delete()
+            .then(message => console.log('You cannot write to the future: ', message.content))
+            .catch(error => console.log('Unable to delete future message: ', error))
+            return;
         }
       }
+
       // Have sending chart as callback to run sync
       writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function () {
         const channel = client.channels.cache.get(process.env.CHANNEL);
@@ -351,30 +384,18 @@ client.on("message", msg => {
       msg
         .delete()
         .then(message => {
-          console.log("Deleted " + message);
+          console.log("Deleted because done:" + message.content);
         })
         .catch(error => {
           console.log("Unable to delete ", error);
         });
     }
+  } else {
+    msg.delete()
+      .then(message => console.log('Deleted non existant command:', message.content))
+      .catch(error => console.log('Unable to delete non existant command:', error))
   }
 
-  // If the message being sent on the server is a command for the bot
-  if (msg.author.bot) {
-    msg.channel.messages
-      .fetch()
-      .then(messages =>
-        messages
-          .filter(m => m.author.bot)
-          .map(messager => {
-            if (messager.id != msg.id) {
-              messager.delete().then(message => console.log('Deleted the previous bots message ', message)).catch(err => console.log('Unable to delete the previous bots message ', err));
-            }
-          })
-      )
-      .catch(err => console.log(err));
-  } else {
-    msg.delete().then(message => console.log('Deleted message because was not a bot response ', message.content)).catch(err => console.log('Error deleting users message becuase not a bot ', err));
-  }
+
 });
 client.login(process.env.TOKEN);
