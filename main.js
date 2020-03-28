@@ -239,6 +239,7 @@ function _makeNewContributor(author) {
  * @param {The function you would like to run after the JSON is written} callback
  */
 function writeJson(filename, key, value, day, msg, callback) {
+
   const CURRENT_DAY = new Date().getDay();
   filename = filename + `-${msg.channel.id}.json`
 
@@ -250,7 +251,18 @@ function writeJson(filename, key, value, day, msg, callback) {
   }
   // Make new person if not exists
   var json = JSON.parse(data);
-  if (!json[key]) json[key] = _makeNewContributor(key);
+  key = msg.author.id  
+  var AUTHOR = ""
+  if (msg.member.nickname) {
+    AUTHOR = msg.member.nickname
+  } else {
+    AUTHOR = msg.author.username
+  }
+  if (!json[key]) json[key] = _makeNewContributor(AUTHOR);
+
+  if (json[key].label != AUTHOR) {
+    json[key].label = AUTHOR
+  }
 
   // Set Color of Inputter
   let keyIndex = Object.keys(json).indexOf(key);
@@ -332,7 +344,8 @@ function writeJson(filename, key, value, day, msg, callback) {
   for (let i = 0; i < keys.length; i++) {
     let maxValue = json[keys[i]].data[currentMax]
     if (max.value < maxValue) {
-      max.user = keys[i];
+      console.log(keys[i])
+      max.user = json[keys[i]].label;
       max.value = maxValue
     }
   }
@@ -388,8 +401,12 @@ client.on("message", msg => {
 
   // If the message being sent on the server is a command for the bot
   if (command === "report") {
-
-    const AUTHOR = msg.author.username;
+    var AUTHOR = ""
+    if (msg.member.nickname) {
+      AUTHOR = msg.member.nickname
+    } else {
+      AUTHOR = msg.author.username
+    }
     var VALUE = Math.round(Number(args[0]));
     const CURRENT_DAY = new Date().getDay();
 
