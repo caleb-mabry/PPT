@@ -294,7 +294,7 @@ function writeJson(filename, key, value, day, msg, callback) {
     SERVER_DAY_INDEX += '-AM'
   }
   
-  // SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX)
+  SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX)
   if (msg.createdAt.getHours() >= 12) {
     USER_DAY += '-PM'
   } else {
@@ -319,8 +319,17 @@ function writeJson(filename, key, value, day, msg, callback) {
   } else {
     dataKey = LABELS.indexOf(day)
   }
+  var currentMax = 0;
   for (let i = 0; i < keys.length; i++) {
-    let maxValue = json[keys[i]].data[dataKey]
+    json[keys[i]].data.map((element,index) => {
+      if (currentMax < index && element != null) {
+        currentMax = index
+      }
+    })
+  }
+  console.log('CURRENT MAX: ', currentMax)
+  for (let i = 0; i < keys.length; i++) {
+    let maxValue = json[keys[i]].data[currentMax]
     if (max.value < maxValue) {
       max.user = keys[i];
       max.value = maxValue
