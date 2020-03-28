@@ -291,10 +291,9 @@ function writeJson(filename, key, value, day, msg, callback) {
   } else {
     USER_DAY += '-AM'
   }
+
   console.log(SERVER_DAY_INDEX, 'server index')
   console.log(LABELS.indexOf(USER_DAY), 'USER DAY INDEX')
-
-  
 
   // Write update to the JSON file
   fs.writeFileSync(filename, JSON.stringify(json));
@@ -306,10 +305,9 @@ function writeJson(filename, key, value, day, msg, callback) {
     user: "",
     value: 0
   }
-  if (LABELS.indexOf(USER_DAY) < SERVER_DAY_INDEX) {
+  if (LABELS.indexOf(USER_DAY) > SERVER_DAY_INDEX) {
     dataKey = LABELS.indexOf(USER_DAY)
   } else {
-    console.log(day)
     dataKey = LABELS.indexOf(day)
   }
   for (let i = 0; i < keys.length; i++) {
@@ -422,7 +420,7 @@ client.on("message", msg => {
         message += `${AUTHOR} just posted ${VALUE}!`
       }
       if (max.value === 0) {
-        message += "\`nWhat? Turnips are 0 bells!`"
+        message += `\nWhat? Turnips are 0 bells!`
       } else {
         message += `\n${max.user} is selling turnips for ${max.value} bells!`
       }
