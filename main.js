@@ -260,6 +260,8 @@ function writeJson(filename, key, value, day, msg, callback) {
     json[key].backgroundColor = getRandomColor();
     json[key].borderColor = getRandomColor();
   }
+
+  var dataKey = "";
   // Set data of Inputter
   if (day === "") {
     day = DAYLOOKUP[CURRENT_DAY]
@@ -268,12 +270,15 @@ function writeJson(filename, key, value, day, msg, callback) {
     } else {
       day += '-AM'
     }
-    var dataKey = LABELS.indexOf(day)
+    dataKey = LABELS.indexOf(day)
     json[key].data[dataKey] = value;
   } else {
     json[key].data[day] = value;
   }
 
+  if (!isNaN(day)) {
+    dataKey = day
+  }
 
   // Write update to the JSON file
   fs.writeFileSync(filename, JSON.stringify(json));
@@ -388,7 +393,15 @@ client.on("message", msg => {
     // Have sending chart as callback to run sync
     writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
       // const channel = client.channels.cache.get(process.env.CHANNEL);
-      msg.channel.send(`${AUTHOR} just posted ${VALUE}!\nThe max turnip seller is ${max.user} with a value of ${max.value}!`, { files: ["./chart.png"] });
+      let message = ""
+      if (isNaN(VALUE)) {
+        message += `${AUTHOR} removed a listing.`
+      } else {
+        message += `${AUTHOR} just posted ${VALUE}!`
+      }
+      message += `\nThe max turnip seller is ${max.user} with a value of ${max.value}!`
+
+      msg.channel.send(message, { files: ["./chart.png"] });
     });
     // Delete the user message
 
