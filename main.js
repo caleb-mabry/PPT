@@ -89,8 +89,8 @@ function getRandomColor() {
   }
   return color;
 }
-function removeEmpty() {
-  var json = JSON.parse(fs.readFileSync(jsonFilename));
+function removeEmpty(filename) {
+  var json = JSON.parse(fs.readFileSync(filename));
   let keys = Object.keys(json);
   keys.forEach(user => {
     let notEmpty = false;
@@ -240,6 +240,7 @@ function _makeNewContributor(author) {
  */
 function writeJson(filename, key, value, day, msg, callback) {
   const CURRENT_DAY = new Date().getDay();
+  filename = filename + `-${msg.channel.id}.json`
 
   try {
     var data = fs.readFileSync(filename);
@@ -306,7 +307,7 @@ function writeJson(filename, key, value, day, msg, callback) {
 
   // Write update to the JSON file
   fs.writeFileSync(filename, JSON.stringify(json));
-  json = removeEmpty();
+  json = removeEmpty(filename);
 
   makeGraph(json);
   const keys = Object.keys(json)
@@ -427,7 +428,6 @@ client.on("message", msg => {
         return;
       }
     }
-    jsonFilename += `-${msg.channel.id}.json`
 
     // Have sending chart as callback to run sync
     writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
