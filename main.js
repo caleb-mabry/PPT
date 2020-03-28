@@ -283,9 +283,16 @@ function writeJson(filename, key, value, day, msg, callback) {
       day += '-AM'
     }
   }
-  let SERVER_DAY_INDEX = LABELS.indexOf(day)
+  // let SERVER_DAY_INDEX = LABELS.indexOf(day)
   let USER_DAY = DAYLOOKUP[msg.createdAt.getDay()]
-
+  let tempDate = new Date()
+  let SERVER_DAY_INDEX = DAYLOOKUP[CURRENT_DAY]
+  if (tempDate.getHours() >= 12) {
+    SERVER_DAY_INDEX += '-PM'
+  } else {
+    SERVER_DAY_INDEX += '-AM'
+  }
+  SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX)
   if (msg.createdAt.getHours() >= 12) {
     USER_DAY += '-PM'
   } else {
