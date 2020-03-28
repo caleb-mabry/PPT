@@ -262,6 +262,7 @@ function writeJson(filename, key, value, day, msg, callback) {
   }
 
   var dataKey = "";
+
   // Set data of Inputter
   if (day === "") {
     day = DAYLOOKUP[CURRENT_DAY]
@@ -274,11 +275,26 @@ function writeJson(filename, key, value, day, msg, callback) {
     json[key].data[dataKey] = value;
   } else {
     json[key].data[day] = value;
-  }
 
-  if (!isNaN(day)) {
-    dataKey = day
+    day = DAYLOOKUP[CURRENT_DAY]
+    if (msg.createdAt.getHours() >= 12) {
+      day += '-PM'
+    } else {
+      day += '-AM'
+    }
   }
+  let SERVER_DAY_INDEX = LABELS.indexOf(day)
+  let USER_DAY = DAYLOOKUP[msg.createdAt.getDay()]
+
+  if (msg.createdAt.getHours() >= 12) {
+    USER_DAY += '-PM'
+  } else {
+    USER_DAY += '-AM'
+  }
+  console.log(SERVER_DAY_INDEX, 'server index')
+  console.log(LABELS.indexOf(USER_DAY), 'USER DAY INDEX')
+
+  
 
   // Write update to the JSON file
   fs.writeFileSync(filename, JSON.stringify(json));
@@ -289,6 +305,12 @@ function writeJson(filename, key, value, day, msg, callback) {
   var max = {
     user: "",
     value: 0
+  }
+  if (LABELS.indexOf(USER_DAY) < SERVER_DAY_INDEX) {
+    dataKey = LABELS.indexOf(USER_DAY)
+  } else {
+    console.log(day)
+    dataKey = LABELS.indexOf(day)
   }
   for (let i = 0; i < keys.length; i++) {
     let maxValue = json[keys[i]].data[dataKey]
@@ -399,7 +421,12 @@ client.on("message", msg => {
       } else {
         message += `${AUTHOR} just posted ${VALUE}!`
       }
-      message += `\nThe max turnip seller is ${max.user} with a value of ${max.value}!`
+      if (max.value === 0) {
+        message += "\`nWhat? Turnips are 0 bells!`"
+      } else {
+        message += `\n${max.user} is selling turnips for ${max.value} bells!`
+      }
+  
 
       msg.channel.send(message, { files: ["./chart.png"] });
     });
