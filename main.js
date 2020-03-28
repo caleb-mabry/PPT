@@ -65,20 +65,20 @@ const DAYLOOKUP = {
   6: 'Saturday'
 }
 var LABELS = [
-  "Sunday-AM",
-  "Sunday-PM",
-  "Monday-AM",
-  "Monday-PM",
-  "Tuesday-AM",
-  "Tuesday-PM",
-  "Wednesday-AM",
-  "Wednesday-PM",
-  "Thursday-AM",
-  "Thursday-PM",
-  "Friday-AM",
-  "Friday-PM",
-  "Saturday-AM",
-  "Saturday-PM"
+  "Sunday-AM", // 0
+  "Sunday-PM", // 1 
+  "Monday-AM", // 2
+  "Monday-PM", // 3
+  "Tuesday-AM", // 4
+  "Tuesday-PM", // 5
+  "Wednesday-AM", // 6
+  "Wednesday-PM", //7
+  "Thursday-AM", //8
+  "Thursday-PM", //9
+  "Friday-AM", //10
+  "Friday-PM", //11
+  "Saturday-AM", //12
+  "Saturday-PM" //13
 ];
 
 function getRandomColor() {
@@ -286,13 +286,15 @@ function writeJson(filename, key, value, day, msg, callback) {
   // let SERVER_DAY_INDEX = LABELS.indexOf(day)
   let USER_DAY = DAYLOOKUP[msg.createdAt.getDay()]
   let tempDate = new Date()
+
   let SERVER_DAY_INDEX = DAYLOOKUP[CURRENT_DAY]
   if (tempDate.getHours() >= 12) {
     SERVER_DAY_INDEX += '-PM'
   } else {
     SERVER_DAY_INDEX += '-AM'
   }
-  SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX)
+  
+  // SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX)
   if (msg.createdAt.getHours() >= 12) {
     USER_DAY += '-PM'
   } else {
@@ -300,7 +302,7 @@ function writeJson(filename, key, value, day, msg, callback) {
   }
 
   console.log(SERVER_DAY_INDEX, 'server index')
-  console.log(LABELS.indexOf(USER_DAY), 'USER DAY INDEX')
+  console.log(USER_DAY, 'USER DAY INDEX')
 
   // Write update to the JSON file
   fs.writeFileSync(filename, JSON.stringify(json));
