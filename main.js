@@ -13,10 +13,10 @@ const fs = require("fs");
 const startOfWeek = moment()
   .startOf("week")
   .format("MM/DD/YYYY");
-const jsonFilename = './json/' +
+var jsonFilename = './json/' +
   moment()
     .startOf("week")
-    .format("MM-DD-YYYY") + ".json";
+    .format("MM-DD-YYYY");
 
 const COLORS = [
   "White",
@@ -427,6 +427,7 @@ client.on("message", msg => {
         return;
       }
     }
+    jsonFilename += `-${msg.channel.id}.json`
 
     // Have sending chart as callback to run sync
     writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
