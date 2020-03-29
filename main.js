@@ -360,6 +360,7 @@ function writeJson(filename, key, value, day, msg, callback) {
     for (let i = 0; i < minArray.length; i++) {
       console.log(minArray[i])
       if (minArray[i].value <= currentMin) {
+        currentMin = minArray[i].value
         max.value = minArray[i].value
         max.user = minArray[i].author
       }
