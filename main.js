@@ -350,15 +350,32 @@ function writeJson(filename, key, value, day, msg, callback) {
       }
     })
   }
-  console.log('CURRENT MAX: ', currentMax)
-  for (let i = 0; i < keys.length; i++) {
-    let maxValue = json[keys[i]].data[currentMax]
-    if (max.value < maxValue) {
-      console.log(keys[i])
-      max.user = json[keys[i]].label;
-      max.value = maxValue
+  if (CURRENT_DAY == 0) {
+    let minArray = []
+    for (let i = 0; i < keys.length; i++) {
+      let minValue = json[keys[i]].data[0]
+      minArray.push({"author":json[keys[i]].label,"value":minValue})
+    }
+    var currentMin = minArray[0].value
+    for (let i = 0; i < minArray.length; i++) {
+      console.log(minArray[i])
+      if (minArray[i].value <= currentMin) {
+        max.value = minArray[i].value
+        max.user = minArray[i].author
+      }
+    }
+
+  } else {
+    for (let i = 0; i < keys.length; i++) {
+      let maxValue = json[keys[i]].data[currentMax]
+      if (max.value < maxValue) {
+        console.log(keys[i])
+        max.user = json[keys[i]].label;
+        max.value = maxValue
+      }
     }
   }
+
   callback(max);
 }
 
@@ -472,10 +489,14 @@ client.on("message", msg => {
       } else {
         message += `${AUTHOR} just posted ${VALUE}!`
       }
-      if (max.value === 0) {
-        message += `\nWhat? Turnips are 0 bells!`
+      if (CURRENT_DAY == 0) {
+        message += `\nYou can get turnips for ${max.value} from ${max.user}`
       } else {
-        message += `\n${max.user} is selling turnips for ${max.value} bells!`
+        if (max.value === 0) {
+          message += `\nWhat? Turnips are 0 bells!`
+        } else {
+          message += `\n${max.user} is selling turnips for ${max.value} bells!`
+        }  
       }
 
 
