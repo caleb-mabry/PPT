@@ -65,20 +65,19 @@ const DAYLOOKUP = {
   6: 'Saturday'
 }
 var LABELS = [
-  "Sunday-AM", // 0
-  "Sunday-PM", // 1 
-  "Monday-AM", // 2
-  "Monday-PM", // 3
-  "Tuesday-AM", // 4
-  "Tuesday-PM", // 5
-  "Wednesday-AM", // 6
-  "Wednesday-PM", //7
-  "Thursday-AM", //8
-  "Thursday-PM", //9
-  "Friday-AM", //10
-  "Friday-PM", //11
-  "Saturday-AM", //12
-  "Saturday-PM" //13
+  "Sunday", // 0
+  "Monday-AM", // 1
+  "Monday-PM", // 2
+  "Tuesday-AM", // 3
+  "Tuesday-PM", // 4
+  "Wednesday-AM", // 5
+  "Wednesday-PM", //6
+  "Thursday-AM", //7
+  "Thursday-PM", //8
+  "Friday-AM", //9
+  "Friday-PM", //10
+  "Saturday-AM", //11
+  "Saturday-PM" //12
 ];
 
 function getRandomColor() {
@@ -223,7 +222,6 @@ function _makeNewContributor(author) {
       null,
       null,
       null,
-      null,
       null
     ]
   };
@@ -251,7 +249,7 @@ function writeJson(filename, key, value, day, msg, callback) {
   }
   // Make new person if not exists
   var json = JSON.parse(data);
-  key = msg.author.id  
+  key = msg.author.id
   var AUTHOR = ""
   if (msg.member.nickname) {
     AUTHOR = msg.member.nickname
@@ -284,16 +282,22 @@ function writeJson(filename, key, value, day, msg, callback) {
     } else {
       day += '-AM'
     }
+    if (day.includes('Sunday')) {
+      day = day.split('-')[0]
+    }
     dataKey = LABELS.indexOf(day)
     json[key].data[dataKey] = value;
   } else {
     json[key].data[day] = value;
-
     day = DAYLOOKUP[CURRENT_DAY]
+
     if (msg.createdAt.getHours() >= 12) {
       day += '-PM'
     } else {
       day += '-AM'
+    }
+    if (day.includes('Sunday')) {
+      day = day.split('-')[0]
     }
   }
   // let SERVER_DAY_INDEX = LABELS.indexOf(day)
@@ -306,12 +310,18 @@ function writeJson(filename, key, value, day, msg, callback) {
   } else {
     SERVER_DAY_INDEX += '-AM'
   }
-  
+  if (SERVER_DAY_INDEX.includes('Sunday')) {
+    SERVER_DAY_INDEX = SERVER_DAY_INDEX.split('-')[0]
+  }
+
   SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX)
   if (msg.createdAt.getHours() >= 12) {
     USER_DAY += '-PM'
   } else {
     USER_DAY += '-AM'
+  }
+  if (USER_DAY.includes('Sunday')) {
+    USER_DAY = USER_DAY.split('-')[0]
   }
 
   console.log(SERVER_DAY_INDEX, 'server index')
@@ -334,7 +344,7 @@ function writeJson(filename, key, value, day, msg, callback) {
   }
   var currentMax = 0;
   for (let i = 0; i < keys.length; i++) {
-    json[keys[i]].data.map((element,index) => {
+    json[keys[i]].data.map((element, index) => {
       if (currentMax < index && element != null) {
         currentMax = index
       }
@@ -425,6 +435,9 @@ client.on("message", msg => {
           day += '-am'
         }
       }
+      if (day.includes('sunday')) {
+        day = day.split('-')[0]
+      }
 
       const minTimeIndex = minLabel.indexOf(day);
       if (minTimeIndex === -1) {
@@ -433,8 +446,12 @@ client.on("message", msg => {
           .catch(error => console.log('Unable to delete index mismatch: ', error))
         return
       }
-      const maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + '-pm'
-
+      var maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + '-pm'
+      if (maxTimeIndex.includes('Sunday')) {
+        maxTimeIndex = maxTimeIndex.split('-')[0]
+      }
+      console.log(maxTimeIndex, 'Max time')
+      console.log(minTimeIndex, 'Min time')
       // Do not allow users to write to the future
       if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
         day = minTimeIndex;
@@ -460,7 +477,7 @@ client.on("message", msg => {
       } else {
         message += `\n${max.user} is selling turnips for ${max.value} bells!`
       }
-  
+
 
       msg.channel.send(message, { files: ["./chart.png"] });
     });
