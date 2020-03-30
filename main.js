@@ -2,8 +2,7 @@
 require("dotenv").config();
 
 // Pull in configuration information
-const { prefix } = require('./config.json');
-
+const { prefix } = require("./config.json");
 
 let moment = require("moment");
 require("moment-timezone");
@@ -13,7 +12,8 @@ const fs = require("fs");
 const startOfWeek = moment()
   .startOf("week")
   .format("MM/DD/YYYY");
-var jsonFilename = './json/' +
+var jsonFilename =
+  "./json/" +
   moment()
     .startOf("week")
     .format("MM-DD-YYYY");
@@ -56,14 +56,14 @@ const COLORS = [
   //Mint
 ];
 const DAYLOOKUP = {
-  0: 'Sunday',
-  1: 'Monday',
-  2: 'Tuesday',
-  3: 'Wednesday',
-  4: 'Thursday',
-  5: 'Friday',
-  6: 'Saturday'
-}
+  0: "Sunday",
+  1: "Monday",
+  2: "Tuesday",
+  3: "Wednesday",
+  4: "Thursday",
+  5: "Friday",
+  6: "Saturday"
+};
 var LABELS = [
   "Sunday", // 0
   "Monday-AM", // 1
@@ -79,7 +79,23 @@ var LABELS = [
   "Saturday-AM", //11
   "Saturday-PM" //12
 ];
+function getLastSunday(d) {
+  var t = new Date(d);
+  let output = "";
+  t.setDate(t.getDate() - t.getDay() - 7);
+  var dd = t.getDate();
+  var mm = t.getMonth() + 1;
+  var yyyy = t.getFullYear();
+  if (dd < 10) {
+    dd = "0" + dd;
+  }
 
+  if (mm < 10) {
+    mm = "0" + mm;
+  }
+  output += `${mm}-${dd}-${yyyy}`;
+  return output;
+}
 function getRandomColor() {
   var letters = "0123456789ABCDEF";
   var color = "#";
@@ -117,7 +133,7 @@ function makeGraph(json) {
     ChartJS => {
       ChartJS.defaults.global.defaultFontColor = "white";
       ChartJS.plugins.register({
-        beforeDraw: function (chartInstance) {
+        beforeDraw: function(chartInstance) {
           var ctx = chartInstance.chart.ctx;
           ctx.fillStyle = "#525252";
           ctx.fillRect(
@@ -237,9 +253,8 @@ function _makeNewContributor(author) {
  * @param {The function you would like to run after the JSON is written} callback
  */
 function writeJson(filename, key, value, day, msg, callback) {
-
   const CURRENT_DAY = new Date().getDay();
-  filename = filename + `-${msg.channel.id}.json`
+  filename = filename + `-${msg.channel.id}.json`;
 
   try {
     var data = fs.readFileSync(filename);
@@ -249,17 +264,17 @@ function writeJson(filename, key, value, day, msg, callback) {
   }
   // Make new person if not exists
   var json = JSON.parse(data);
-  key = msg.author.id
-  var AUTHOR = ""
+  key = msg.author.id;
+  var AUTHOR = "";
   if (msg.member.nickname) {
-    AUTHOR = msg.member.nickname
+    AUTHOR = msg.member.nickname;
   } else {
-    AUTHOR = msg.author.username
+    AUTHOR = msg.author.username;
   }
   if (!json[key]) json[key] = _makeNewContributor(AUTHOR);
 
   if (json[key].label != AUTHOR) {
-    json[key].label = AUTHOR
+    json[key].label = AUTHOR;
   }
 
   // Set Color of Inputter
@@ -276,103 +291,102 @@ function writeJson(filename, key, value, day, msg, callback) {
 
   // Set data of Inputter
   if (day === "") {
-    day = DAYLOOKUP[CURRENT_DAY]
+    day = DAYLOOKUP[CURRENT_DAY];
     if (msg.createdAt.getHours() >= 12) {
-      day += '-PM'
+      day += "-PM";
     } else {
-      day += '-AM'
+      day += "-AM";
     }
-    if (day.includes('Sunday')) {
-      day = day.split('-')[0]
+    if (day.includes("Sunday")) {
+      day = day.split("-")[0];
     }
-    dataKey = LABELS.indexOf(day)
+    dataKey = LABELS.indexOf(day);
     json[key].data[dataKey] = value;
   } else {
     json[key].data[day] = value;
-    day = DAYLOOKUP[CURRENT_DAY]
+    day = DAYLOOKUP[CURRENT_DAY];
 
     if (msg.createdAt.getHours() >= 12) {
-      day += '-PM'
+      day += "-PM";
     } else {
-      day += '-AM'
+      day += "-AM";
     }
-    if (day.includes('Sunday')) {
-      day = day.split('-')[0]
+    if (day.includes("Sunday")) {
+      day = day.split("-")[0];
     }
   }
   // let SERVER_DAY_INDEX = LABELS.indexOf(day)
-  let USER_DAY = DAYLOOKUP[msg.createdAt.getDay()]
-  let tempDate = new Date()
+  let USER_DAY = DAYLOOKUP[msg.createdAt.getDay()];
+  let tempDate = new Date();
 
-  let SERVER_DAY_INDEX = DAYLOOKUP[CURRENT_DAY]
+  let SERVER_DAY_INDEX = DAYLOOKUP[CURRENT_DAY];
   if (tempDate.getHours() >= 12) {
-    SERVER_DAY_INDEX += '-PM'
+    SERVER_DAY_INDEX += "-PM";
   } else {
-    SERVER_DAY_INDEX += '-AM'
+    SERVER_DAY_INDEX += "-AM";
   }
-  if (SERVER_DAY_INDEX.includes('Sunday')) {
-    SERVER_DAY_INDEX = SERVER_DAY_INDEX.split('-')[0]
+  if (SERVER_DAY_INDEX.includes("Sunday")) {
+    SERVER_DAY_INDEX = SERVER_DAY_INDEX.split("-")[0];
   }
 
-  SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX)
+  SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX);
   if (msg.createdAt.getHours() >= 12) {
-    USER_DAY += '-PM'
+    USER_DAY += "-PM";
   } else {
-    USER_DAY += '-AM'
+    USER_DAY += "-AM";
   }
-  if (USER_DAY.includes('Sunday')) {
-    USER_DAY = USER_DAY.split('-')[0]
+  if (USER_DAY.includes("Sunday")) {
+    USER_DAY = USER_DAY.split("-")[0];
   }
 
-  console.log(SERVER_DAY_INDEX, 'server index')
-  console.log(USER_DAY, 'USER DAY INDEX')
+  console.log(SERVER_DAY_INDEX, "server index");
+  console.log(USER_DAY, "USER DAY INDEX");
 
   // Write update to the JSON file
   fs.writeFileSync(filename, JSON.stringify(json));
   json = removeEmpty(filename);
 
   makeGraph(json);
-  const keys = Object.keys(json)
+  const keys = Object.keys(json);
   var max = {
     user: "",
     value: 0
-  }
+  };
   if (LABELS.indexOf(USER_DAY) > SERVER_DAY_INDEX) {
-    dataKey = LABELS.indexOf(USER_DAY)
+    dataKey = LABELS.indexOf(USER_DAY);
   } else {
-    dataKey = LABELS.indexOf(day)
+    dataKey = LABELS.indexOf(day);
   }
   var currentMax = 0;
   for (let i = 0; i < keys.length; i++) {
     json[keys[i]].data.map((element, index) => {
       if (currentMax < index && element != null) {
-        currentMax = index
+        currentMax = index;
       }
-    })
+    });
   }
   if (CURRENT_DAY == 0) {
-    let minArray = []
+    let minArray = [];
     for (let i = 0; i < keys.length; i++) {
-      let minValue = json[keys[i]].data[0]
-      minArray.push({"author":json[keys[i]].label,"value":minValue})
+      let minValue = json[keys[i]].data[0];
+      minArray.push({ author: json[keys[i]].label, value: minValue });
     }
-    var currentMin = minArray[0].value
+    var currentMin = minArray[0].value;
     for (let i = 0; i < minArray.length; i++) {
-      console.log(minArray[i])
+      console.log(minArray[i]);
       if (minArray[i].value <= currentMin) {
-        currentMin = minArray[i].value
-        max.value = minArray[i].value
-        max.user = minArray[i].author
+        currentMin = minArray[i].value;
+        max.value = minArray[i].value;
+        max.user = minArray[i].author;
       }
     }
-
   } else {
     for (let i = 0; i < keys.length; i++) {
-      let maxValue = json[keys[i]].data[currentMax]
+      let maxValue = json[keys[i]].data[currentMax];
       if (max.value < maxValue) {
-        console.log(keys[i])
+        console.log(keys[i]);
         max.user = json[keys[i]].label;
-        max.value = maxValue
+        max.value = maxValue;
       }
     }
   }
@@ -386,11 +400,12 @@ client.on("ready", () => {
 
 client.on("message", msg => {
   if (!msg.content.startsWith(prefix) && !msg.author.bot) {
-    msg.delete()
-      .then(success => console.log('Deleted non command:', success.content))
-      .catch(error => console.log('Unable to delete non command:', error))
+    msg
+      .delete()
+      .then(success => console.log("Deleted non command:", success.content))
+      .catch(error => console.log("Unable to delete non command:", error));
     return;
-  };
+  }
 
   // If the message being sent on the server is a command for the bot
   if (msg.author.bot) {
@@ -402,14 +417,25 @@ client.on("message", msg => {
           .filter(m => m.author.bot)
           .map(messager => {
             if (messager.id != msg.id) {
-              messager.delete()
-                .then(message => console.log('Deleted the previous bots message ', message.content))
-                .catch(err => console.log('Unable to delete the previous bots message ', err));
+              messager
+                .delete()
+                .then(message =>
+                  console.log(
+                    "Deleted the previous bots message ",
+                    message.content
+                  )
+                )
+                .catch(err =>
+                  console.log(
+                    "Unable to delete the previous bots message ",
+                    err
+                  )
+                );
             }
           })
       )
       .catch(err => console.log(err));
-    return
+    return;
   }
 
   // Args is everything after the command. This is because of shift()
@@ -417,7 +443,7 @@ client.on("message", msg => {
   const command = args.shift().toLowerCase();
 
   // If number is NaN or less than 0
-  if (args[0] === null && isNaN(args[0]) || args[0] <= 0 || args[0] >= 800) {
+  if ((args[0] === null && isNaN(args[0])) || args[0] <= 0 || args[0] >= 800) {
     msg
       .delete()
       .then(message => {
@@ -429,11 +455,11 @@ client.on("message", msg => {
 
   // If the message being sent on the server is a command for the bot
   if (command === "report") {
-    var AUTHOR = ""
+    var AUTHOR = "";
     if (msg.member.nickname) {
-      AUTHOR = msg.member.nickname
+      AUTHOR = msg.member.nickname;
     } else {
-      AUTHOR = msg.author.username
+      AUTHOR = msg.author.username;
     }
     var VALUE = Math.round(Number(args[0]));
     const CURRENT_DAY = new Date().getDay();
@@ -446,60 +472,69 @@ client.on("message", msg => {
       const minLabel = LABELS.map(item => item.toLowerCase());
 
       // If the day does not have a dash
-      if (!day.split('-')[1]) {
+      if (!day.split("-")[1]) {
         if (msg.createdAt.getHours() >= 12) {
-          day += '-pm'
+          day += "-pm";
         } else {
-          day += '-am'
+          day += "-am";
         }
       }
-      if (day.includes('sunday')) {
-        day = day.split('-')[0]
+      if (day.includes("sunday")) {
+        day = day.split("-")[0];
       }
 
       const minTimeIndex = minLabel.indexOf(day);
       if (minTimeIndex === -1) {
-        msg.delete()
-          .then(message => console.log('Day does not match any in index: ', message.content))
-          .catch(error => console.log('Unable to delete index mismatch: ', error))
-        return
+        msg
+          .delete()
+          .then(message =>
+            console.log("Day does not match any in index: ", message.content)
+          )
+          .catch(error =>
+            console.log("Unable to delete index mismatch: ", error)
+          );
+        return;
       }
-      var maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + '-pm'
-      if (maxTimeIndex.includes('Sunday')) {
-        maxTimeIndex = maxTimeIndex.split('-')[0]
+      var maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + "-pm";
+      if (maxTimeIndex.includes("Sunday")) {
+        maxTimeIndex = maxTimeIndex.split("-")[0];
       }
-      console.log(maxTimeIndex, 'Max time')
-      console.log(minTimeIndex, 'Min time')
+      console.log(maxTimeIndex, "Max time");
+      console.log(minTimeIndex, "Min time");
       // Do not allow users to write to the future
       if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
         day = minTimeIndex;
       } else {
-        msg.delete()
-          .then(message => console.log('You cannot write to the future: ', message.content))
-          .catch(error => console.log('Unable to delete future message: ', error))
+        msg
+          .delete()
+          .then(message =>
+            console.log("You cannot write to the future: ", message.content)
+          )
+          .catch(error =>
+            console.log("Unable to delete future message: ", error)
+          );
         return;
       }
     }
 
     // Have sending chart as callback to run sync
-    writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
+    writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function(max) {
       // const channel = client.channels.cache.get(process.env.CHANNEL);
-      let message = ""
+      let message = "";
       if (isNaN(VALUE)) {
-        message += `${AUTHOR} removed a listing.`
+        message += `${AUTHOR} removed a listing.`;
       } else {
-        message += `${AUTHOR} just posted ${VALUE}!`
+        message += `${AUTHOR} just posted ${VALUE}!`;
       }
       if (CURRENT_DAY == 0) {
-        message += `\nYou can get turnips for ${max.value} from ${max.user}`
+        message += `\nYou can get turnips for ${max.value} from ${max.user}`;
       } else {
         if (max.value === 0) {
-          message += `\nWhat? Turnips are 0 bells!`
+          message += `\nWhat? Turnips are 0 bells!`;
         } else {
-          message += `\n${max.user} is selling turnips for ${max.value} bells!`
-        }  
+          message += `\n${max.user} is selling turnips for ${max.value} bells!`;
+        }
       }
-
 
       msg.channel.send(message, { files: ["./chart.png"] });
     });
@@ -513,13 +548,40 @@ client.on("message", msg => {
       .catch(error => {
         console.log("Unable to delete ", error);
       });
+  } else if (command === "history") {
+    if (!Boolean(args[0])) {
+      var prevWeek = getLastSunday(new Date());
+      try {
+        var json = JSON.parse(
+          fs.readFileSync("./json/" + prevWeek + "-" + msg.channel.id + ".json")
+        );
+        console.log(json)
+        makeGraph(json);
+        msg.author.send("", { files: ["./chart.png"] });
+      } catch {
+        msg.author.send(`We don't have data for ${prevWeek}`);
+      }
+    } else {
+      try {
+        console.log("./json/" + args[0] + "-" + msg.channel.id + ".json")
+        var json = 
+        JSON.parse(fs.readFileSync("./json/" + args[0] + "-" + msg.channel.id + ".json"))
+        makeGraph(json);
+        msg.author.send("", { files: ["./chart.png"] });
+      } catch {
+        msg.author.send(`We don't have data for ${args[0]}`);
+      }
+    }
 
   } else {
-    msg.delete()
-      .then(message => console.log('Deleted non existant command:', message.content))
-      .catch(error => console.log('Unable to delete non existant command:', error))
+    msg
+      .delete()
+      .then(message =>
+        console.log("Deleted non existant command:", message.content)
+      )
+      .catch(error =>
+        console.log("Unable to delete non existant command:", error)
+      );
   }
-
-
 });
 client.login(process.env.TOKEN);
