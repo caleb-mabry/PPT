@@ -133,7 +133,7 @@ function makeGraph(json) {
     ChartJS => {
       ChartJS.defaults.global.defaultFontColor = "white";
       ChartJS.plugins.register({
-        beforeDraw: function(chartInstance) {
+        beforeDraw: function (chartInstance) {
           var ctx = chartInstance.chart.ctx;
           ctx.fillStyle = "#525252";
           ctx.fillRect(
@@ -518,7 +518,7 @@ client.on("message", msg => {
     }
 
     // Have sending chart as callback to run sync
-    writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function(max) {
+    writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
       // const channel = client.channels.cache.get(process.env.CHANNEL);
       let message = "";
       if (isNaN(VALUE)) {
@@ -548,7 +548,8 @@ client.on("message", msg => {
       .catch(error => {
         console.log("Unable to delete ", error);
       });
-  } else if (command === "history") {
+  }
+  if (command === "history") {
     if (!Boolean(args[0])) {
       var prevWeek = getLastSunday(new Date());
       try {
@@ -564,8 +565,8 @@ client.on("message", msg => {
     } else {
       try {
         console.log("./json/" + args[0] + "-" + msg.channel.id + ".json")
-        var json = 
-        JSON.parse(fs.readFileSync("./json/" + args[0] + "-" + msg.channel.id + ".json"))
+        var json =
+          JSON.parse(fs.readFileSync("./json/" + args[0] + "-" + msg.channel.id + ".json"))
         makeGraph(json);
         msg.author.send("", { files: ["./chart.png"] });
       } catch {
@@ -573,7 +574,8 @@ client.on("message", msg => {
       }
     }
 
-  } else {
+  }
+  
     msg
       .delete()
       .then(message =>
