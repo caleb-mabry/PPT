@@ -584,6 +584,6 @@ client.on("message", msg => {
       .catch(error =>
         console.log("Unable to delete non existant command:", error)
       );
-  }
+  
 });
 client.login(process.env.TOKEN);
