@@ -4,7 +4,6 @@ require("dotenv").config();
 // Pull in configuration information
 const { prefix } = require("./config.json");
 
-let moment = require("moment");
 require("moment-timezone");
 const Discord = require("discord.js");
 const client = new Discord.Client();
@@ -72,6 +71,7 @@ var LABELS = [
     "Saturday-AM", //11
     "Saturday-PM" //12
 ];
+
 function getLastSunday(d) {
     var t = new Date(d);
     let output = "";
@@ -89,6 +89,7 @@ function getLastSunday(d) {
     output += `${mm}-${dd}-${yyyy}`;
     return output;
 }
+
 function getRandomColor() {
     var letters = "0123456789ABCDEF";
     var color = "#";
@@ -97,6 +98,7 @@ function getRandomColor() {
     }
     return color;
 }
+
 function removeEmpty(filename) {
     var json = JSON.parse(fs.readFileSync(filename));
     let keys = Object.keys(json);
@@ -113,7 +115,9 @@ function removeEmpty(filename) {
     });
     return json;
 }
+
 function makeGraph(json) {
+  var moment = require("moment");
     const fs = require("fs");
     const startOfWeek = moment()
         .startOf("week")
@@ -249,6 +253,7 @@ function _makeNewContributor(author) {
  * @param {The function you would like to run after the JSON is written} callback
  */
 function writeJson(filename, key, value, day, msg, callback) {
+  var moment = require("moment");
     const CURRENT_DAY = new Date().getDay();
     filename = filename + `-${msg.channel.id}.json`;
 
@@ -335,9 +340,6 @@ function writeJson(filename, key, value, day, msg, callback) {
         USER_DAY = USER_DAY.split("-")[0];
     }
 
-    console.log(SERVER_DAY_INDEX, "server index");
-    console.log(USER_DAY, "USER DAY INDEX");
-
     // Write update to the JSON file
     fs.writeFileSync(filename, JSON.stringify(json));
     json = removeEmpty(filename);
@@ -370,7 +372,6 @@ function writeJson(filename, key, value, day, msg, callback) {
         if (minArray.length) {
             var currentMin = minArray[0].value;
             for (let i = 0; i < minArray.length; i++) {
-                console.log(minArray[i]);
                 if (minArray[i].value <= currentMin) {
                     currentMin = minArray[i].value;
                     max.value = minArray[i].value;
@@ -386,7 +387,6 @@ function writeJson(filename, key, value, day, msg, callback) {
         for (let i = 0; i < keys.length; i++) {
             let maxValue = json[keys[i]].data[currentMax];
             if (max.value < maxValue) {
-                console.log(keys[i]);
                 max.user = json[keys[i]].label;
                 max.value = maxValue;
             }
@@ -401,12 +401,13 @@ client.on("ready", () => {
 });
 
 client.on("message", msg => {
-    let configPrefix = JSON.parse(fs.readFileSync('./config.json'))
+    var moment = require("moment");
+    // let configPrefix = JSON.parse(fs.readFileSync('./config.json'))
     if (!msg.content.startsWith(prefix) && !msg.author.bot) {
         msg
             .delete()
-            .then(success => console.log("Deleted non command:", success.content))
-            .catch(error => console.log("Unable to delete non command:", error));
+            .then(success => {return success})
+            .catch(error => {return error});
         return;
     }
 
@@ -417,27 +418,19 @@ client.on("message", msg => {
             .fetch()
             .then(messages =>
                 messages
-                    .filter(m => m.author.bot)
+                    .filter(m => m.author.bot )
                     .map(messager => {
                         if (messager.id != msg.id) {
                             messager
                                 .delete()
                                 .then(message =>
-                                    console.log(
-                                        "Deleted the previous bots message ",
-                                        message.content
-                                    )
+                                    {return message}
                                 )
-                                .catch(err =>
-                                    console.log(
-                                        "Unable to delete the previous bots message ",
-                                        err
-                                    )
-                                );
+                                .catch(err => {return err})
                         }
                     })
             )
-            .catch(err => console.log(err));
+            .catch(err => {return err});
         return;
     }
 
@@ -450,9 +443,9 @@ client.on("message", msg => {
         msg
             .delete()
             .then(message => {
-                console.log("Deleted the NaN:", message.content);
+                return message
             })
-            .catch(err => console.log(err));
+            .catch(err => {return err});
         return;
     }
 
@@ -464,9 +457,9 @@ client.on("message", msg => {
         } else {
             AUTHOR = msg.author.username;
         }
+
         var VALUE = Math.round(Number(args[0]));
         const CURRENT_DAY = new Date().getDay();
-
         let day = "";
 
         // User specified a time
@@ -491,10 +484,10 @@ client.on("message", msg => {
                 msg
                     .delete()
                     .then(message =>
-                        console.log("Day does not match any in index: ", message.content)
+                        {return message}
                     )
                     .catch(error =>
-                        console.log("Unable to delete index mismatch: ", error)
+                        {return error}
                     );
                 return;
             }
@@ -502,8 +495,7 @@ client.on("message", msg => {
             if (maxTimeIndex.includes("Sunday")) {
                 maxTimeIndex = maxTimeIndex.split("-")[0];
             }
-            console.log(maxTimeIndex, "Max time");
-            console.log(minTimeIndex, "Min time");
+
             // Do not allow users to write to the future
             if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
                 day = minTimeIndex;
@@ -511,23 +503,25 @@ client.on("message", msg => {
                 msg
                     .delete()
                     .then(message =>
-                        console.log("You cannot write to the future: ", message.content)
+                        {return message}
                     )
                     .catch(error =>
-                        console.log("Unable to delete future message: ", error)
+                        {return error}
                     );
                 return;
             }
         }
-
+        console.log(`${AUTHOR} has sent a report with a value of ${VALUE} at ${new Date()}`)
+        
         var jsonFilename =
             "./json/" +
             moment()
                 .startOf("week")
                 .format("MM-DD-YYYY");
-
+          
         // Have sending chart as callback to run sync
         writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
+          
             // const channel = client.channels.cache.get(process.env.CHANNEL);
             let message = "";
             if (isNaN(VALUE)) {
@@ -554,24 +548,25 @@ client.on("message", msg => {
             msg.channel.send(message, { files: ["./chart.png"] });
         });
         // Delete the user message
-
         msg
             .delete()
             .then(message => {
-                console.log("Deleted because done:" + message.content);
+                return message
             })
             .catch(error => {
-                console.log("Unable to delete ", error);
+                return error;
             });
+          return;
     }
-    if (command === "history") {
+
+    // Experimental history command
+    else if (command === "history") {
         if (!Boolean(args[0])) {
             var prevWeek = getLastSunday(new Date());
             try {
                 var json = JSON.parse(
                     fs.readFileSync("./json/" + prevWeek + "-" + msg.channel.id + ".json")
                 );
-                console.log(json)
                 makeGraph(json);
                 msg.author.send("", { files: ["./chart.png"] });
             } catch {
@@ -579,7 +574,6 @@ client.on("message", msg => {
             }
         } else {
             try {
-                console.log("./json/" + args[0] + "-" + msg.channel.id + ".json")
                 var json =
                     JSON.parse(fs.readFileSync("./json/" + args[0] + "-" + msg.channel.id + ".json"))
                 makeGraph(json);
@@ -590,15 +584,20 @@ client.on("message", msg => {
         }
 
     }
+    else {
+      msg
+      .delete()
+      .then(message =>
+          {return message}
+      )
+      .catch(error =>
+          {return error}
+      );
+    return
+    }
 
-    msg
-        .delete()
-        .then(message =>
-            console.log("Deleted non existant command:", message.content)
-        )
-        .catch(error =>
-            console.log("Unable to delete non existant command:", error)
-        );
+    
 
 });
+
 client.login(process.env.TOKEN);

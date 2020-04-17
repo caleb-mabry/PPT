@@ -3,3 +3,4 @@ output.json
 chart.png
 .env
 /json
+*.log
