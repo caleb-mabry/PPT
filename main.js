@@ -591,8 +591,7 @@ client.on("message", msg => {
         }
 
     }
-    else {
-      msg
+    msg
       .delete()
       .then(message =>
           {return message}
@@ -601,7 +600,6 @@ client.on("message", msg => {
           {return error}
       );
     return
-    }
 
     
 
