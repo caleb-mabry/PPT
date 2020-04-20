@@ -581,6 +581,13 @@ client.on("message", msg => {
             } catch {
                 msg.author.send(`We don't have data for ${args[0]}`);
             }
+            msg.delete()
+            .then(message => {
+                return message
+            })
+            .catch(error => {
+                return error
+            })
         }
 
     }
