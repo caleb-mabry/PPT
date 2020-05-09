@@ -9,7 +9,6 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
 
-
 const COLORS = [
     "White",
     "Black",
@@ -147,20 +146,20 @@ function makeGraph(json) {
         }
     );
 
+    
     // Convert JSON to Array Object for Chart
     var dataset = [];
     const keys = Object.keys(json);
     keys.forEach(item => {
         dataset.push(json[item]);
     });
-
     const configuration = {
         type: "line",
         data: {
             labels: LABELS,
             datasets: dataset
         },
-
+    
         options: {
             scales: {
                 xAxes: [
@@ -188,7 +187,7 @@ function makeGraph(json) {
                     }
                 ]
             },
-
+    
             elements: {
                 line: {
                     tension: 0
@@ -209,6 +208,7 @@ function makeGraph(json) {
             }
         }
     };
+
 
     const image = canvasRenderService.renderToBufferSync(configuration);
     fs.writeFileSync("chart.png", image);
@@ -459,7 +459,7 @@ client.on("message", msg => {
         }
 
         var VALUE = Math.round(Number(args[0]));
-        const CURRENT_DAY = new Date().getDay();
+        const CURRENT_DAY = msg.createdAt.getDay()
         let day = "";
 
         // User specified a time
@@ -492,10 +492,12 @@ client.on("message", msg => {
                 return;
             }
             var maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + "-pm";
+
+            // Handle the Sunday edge case
             if (maxTimeIndex.includes("Sunday")) {
                 maxTimeIndex = maxTimeIndex.split("-")[0];
             }
-
+            
             // Do not allow users to write to the future
             if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
                 day = minTimeIndex;
@@ -511,7 +513,7 @@ client.on("message", msg => {
                 return;
             }
         }
-        console.log(`${AUTHOR} has sent a report with a value of ${VALUE} at ${new Date()}`)
+        console.log(`${AUTHOR} has sent a report with a value of ${VALUE} at ${msg.createdAt}`)
         
         var jsonFilename =
             "./json/" +
@@ -527,7 +529,7 @@ client.on("message", msg => {
             if (isNaN(VALUE)) {
                 message += `${AUTHOR} removed a listing.`;
             } else {
-                message += `${AUTHOR} just posted ${VALUE}!`;
+                message += `${AUTHOR} just posted ${VALUE} at ${msg.createdAt}! `;
             }
             if (CURRENT_DAY == 0) {
                 if (max.user === null) {
@@ -558,10 +560,43 @@ client.on("message", msg => {
             });
           return;
     }
+    
+    if (command === "graph") {
+        let graphArg = args.join(" ").toLowerCase()
+        var jsonFilename =
+        "./json/" +
+        moment()
+            .startOf("week")
+            .format("MM-DD-YYYY");
+        jsonFilename += `-${msg.channel.id}.json`
+        var data = JSON.parse(fs.readFileSync(jsonFilename))
+        let userIdsInServer = Object.keys(data)
+        let usersInServer = userIdsInServer.map(userId => data[userId].label.toLowerCase())
+        
+        // If user is in the server
+        if (usersInServer.includes(graphArg)) {
+            userIdsInServer.forEach(function(key) {
+                if (data[key].label.toLowerCase() == graphArg) {
+                    makeGraph({key: data[key]})
+                    msg.author.send("", { files: ["./chart.png"] });
+                }
+            })          
+        } 
+        // If user isn't in the server
+        else {
+            msg.author.send(`The user ${args.join(" ")} doesn't exist in that server. Maybe try:\n${usersInServer.join('\n')}`)
 
+        }
+        
+
+        
+    }
     // Experimental history command
     else if (command === "history") {
-        if (!Boolean(args[0])) {
+        if (args[0].toLowerCase() === 'self') {
+            
+        }
+        else if (!Boolean(args[0])) {
             var prevWeek = getLastSunday(new Date());
             try {
                 var json = JSON.parse(
