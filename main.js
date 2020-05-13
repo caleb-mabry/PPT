@@ -116,7 +116,7 @@ function removeEmpty(filename) {
 }
 
 function makeGraph(json) {
-  var moment = require("moment");
+    var moment = require("moment");
     const fs = require("fs");
     const startOfWeek = moment()
         .startOf("week")
@@ -146,7 +146,7 @@ function makeGraph(json) {
         }
     );
 
-    
+
     // Convert JSON to Array Object for Chart
     var dataset = [];
     const keys = Object.keys(json);
@@ -159,7 +159,7 @@ function makeGraph(json) {
             labels: LABELS,
             datasets: dataset
         },
-    
+
         options: {
             scales: {
                 xAxes: [
@@ -187,7 +187,7 @@ function makeGraph(json) {
                     }
                 ]
             },
-    
+
             elements: {
                 line: {
                     tension: 0
@@ -253,7 +253,7 @@ function _makeNewContributor(author) {
  * @param {The function you would like to run after the JSON is written} callback
  */
 function writeJson(filename, key, value, day, msg, callback) {
-  var moment = require("moment");
+    var moment = require("moment");
     const CURRENT_DAY = new Date().getDay();
     filename = filename + `-${msg.channel.id}.json`;
 
@@ -293,7 +293,7 @@ function writeJson(filename, key, value, day, msg, callback) {
     // Set data of Inputter
     if (day === "") {
         day = DAYLOOKUP[CURRENT_DAY];
-        if (msg.createdAt.getHours() >= 12) {
+        if (new Date(msg.createdTimestamp).getHours() >= 12) {
             day += "-PM";
         } else {
             day += "-AM";
@@ -307,7 +307,7 @@ function writeJson(filename, key, value, day, msg, callback) {
         json[key].data[day] = value;
         day = DAYLOOKUP[CURRENT_DAY];
 
-        if (msg.createdAt.getHours() >= 12) {
+        if (new Date(msg.createdTimestamp).getHours() >= 12) {
             day += "-PM";
         } else {
             day += "-AM";
@@ -317,7 +317,7 @@ function writeJson(filename, key, value, day, msg, callback) {
         }
     }
     // let SERVER_DAY_INDEX = LABELS.indexOf(day)
-    let USER_DAY = DAYLOOKUP[msg.createdAt.getDay()];
+    let USER_DAY = DAYLOOKUP[new Date(msg.createdTimestamp).getDay()];
     let tempDate = new Date();
 
     let SERVER_DAY_INDEX = DAYLOOKUP[CURRENT_DAY];
@@ -331,7 +331,7 @@ function writeJson(filename, key, value, day, msg, callback) {
     }
 
     SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX);
-    if (msg.createdAt.getHours() >= 12) {
+    if (new Date(msg.createdTimestamp).getHours() >= 12) {
         USER_DAY += "-PM";
     } else {
         USER_DAY += "-AM";
@@ -406,8 +406,8 @@ client.on("message", msg => {
     if (!msg.content.startsWith(prefix) && !msg.author.bot) {
         msg
             .delete()
-            .then(success => {return success})
-            .catch(error => {return error});
+            .then(success => { return success })
+            .catch(error => { return error });
         return;
     }
 
@@ -418,19 +418,18 @@ client.on("message", msg => {
             .fetch()
             .then(messages =>
                 messages
-                    .filter(m => m.author.bot )
+                    .filter(m => m.author.bot)
                     .map(messager => {
                         if (messager.id != msg.id) {
                             messager
                                 .delete()
-                                .then(message =>
-                                    {return message}
+                                .then(message => { return message }
                                 )
-                                .catch(err => {return err})
+                                .catch(err => { return err })
                         }
                     })
             )
-            .catch(err => {return err});
+            .catch(err => { return err });
         return;
     }
 
@@ -445,7 +444,7 @@ client.on("message", msg => {
             .then(message => {
                 return message
             })
-            .catch(err => {return err});
+            .catch(err => { return err });
         return;
     }
 
@@ -459,7 +458,7 @@ client.on("message", msg => {
         }
 
         var VALUE = Math.round(Number(args[0]));
-        const CURRENT_DAY = msg.createdAt.getDay()
+        const CURRENT_DAY = new Date(msg.createdTimestamp).getDay()
         let day = "";
 
         // User specified a time
@@ -469,7 +468,7 @@ client.on("message", msg => {
 
             // If the day does not have a dash
             if (!day.split("-")[1]) {
-                if (msg.createdAt.getHours() >= 12) {
+                if (new Date(msg.createdTimestamp).getHours() >= 12) {
                     day += "-pm";
                 } else {
                     day += "-am";
@@ -483,11 +482,9 @@ client.on("message", msg => {
             if (minTimeIndex === -1) {
                 msg
                     .delete()
-                    .then(message =>
-                        {return message}
+                    .then(message => { return message }
                     )
-                    .catch(error =>
-                        {return error}
+                    .catch(error => { return error }
                     );
                 return;
             }
@@ -497,39 +494,37 @@ client.on("message", msg => {
             if (maxTimeIndex.includes("Sunday")) {
                 maxTimeIndex = maxTimeIndex.split("-")[0];
             }
-            
+
             // Do not allow users to write to the future
             if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
                 day = minTimeIndex;
             } else {
                 msg
                     .delete()
-                    .then(message =>
-                        {return message}
+                    .then(message => { return message }
                     )
-                    .catch(error =>
-                        {return error}
+                    .catch(error => { return error }
                     );
                 return;
             }
         }
-        console.log(`${AUTHOR} has sent a report with a value of ${VALUE} at ${msg.createdAt}`)
-        
+        console.log(`${AUTHOR} has sent a report with a value of ${VALUE} at ${new Date(msg.createdTimestamp)}`)
+
         var jsonFilename =
             "./json/" +
             moment()
                 .startOf("week")
                 .format("MM-DD-YYYY");
-          
+
         // Have sending chart as callback to run sync
         writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
-          
+
             // const channel = client.channels.cache.get(process.env.CHANNEL);
             let message = "";
             if (isNaN(VALUE)) {
                 message += `${AUTHOR} removed a listing.`;
             } else {
-                message += `${AUTHOR} just posted ${VALUE} at ${msg.createdAt}! `;
+                message += `${AUTHOR} just posted ${VALUE} at ${new Date(msg.createdTimestamp).toDateString()}! `;
             }
             if (CURRENT_DAY == 0) {
                 if (max.user === null) {
@@ -558,43 +553,43 @@ client.on("message", msg => {
             .catch(error => {
                 return error;
             });
-          return;
+        return;
     }
-    
+
     if (command === "graph") {
         let graphArg = args.join(" ").toLowerCase()
         var jsonFilename =
-        "./json/" +
-        moment()
-            .startOf("week")
-            .format("MM-DD-YYYY");
+            "./json/" +
+            moment()
+                .startOf("week")
+                .format("MM-DD-YYYY");
         jsonFilename += `-${msg.channel.id}.json`
         var data = JSON.parse(fs.readFileSync(jsonFilename))
         let userIdsInServer = Object.keys(data)
         let usersInServer = userIdsInServer.map(userId => data[userId].label.toLowerCase())
-        
+
         // If user is in the server
         if (usersInServer.includes(graphArg)) {
-            userIdsInServer.forEach(function(key) {
+            userIdsInServer.forEach(function (key) {
                 if (data[key].label.toLowerCase() == graphArg) {
-                    makeGraph({key: data[key]})
+                    makeGraph({ key: data[key] })
                     msg.author.send("", { files: ["./chart.png"] });
                 }
-            })          
-        } 
+            })
+        }
         // If user isn't in the server
         else {
             msg.author.send(`The user ${args.join(" ")} doesn't exist in that server. Maybe try:\n${usersInServer.join('\n')}`)
 
         }
-        
 
-        
+
+
     }
     // Experimental history command
     else if (command === "history") {
         if (args[0].toLowerCase() === 'self') {
-            
+
         }
         else if (!Boolean(args[0])) {
             var prevWeek = getLastSunday(new Date());
@@ -617,26 +612,24 @@ client.on("message", msg => {
                 msg.author.send(`We don't have data for ${args[0]}`);
             }
             msg.delete()
-            .then(message => {
-                return message
-            })
-            .catch(error => {
-                return error
-            })
+                .then(message => {
+                    return message
+                })
+                .catch(error => {
+                    return error
+                })
         }
 
     }
     msg
-      .delete()
-      .then(message =>
-          {return message}
-      )
-      .catch(error =>
-          {return error}
-      );
+        .delete()
+        .then(message => { return message }
+        )
+        .catch(error => { return error }
+        );
     return
 
-    
+
 
 });
 
