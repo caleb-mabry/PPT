@@ -564,7 +564,13 @@ client.on("message", msg => {
                 .startOf("week")
                 .format("MM-DD-YYYY");
         jsonFilename += `-${msg.channel.id}.json`
-        var data = JSON.parse(fs.readFileSync(jsonFilename))
+            try {
+        var data = JSON.parse(fs.readFileSync(jsonFilename));
+    } catch {
+        fs.writeFileSync(jsonFilename, JSON.stringify({}));
+        var data = JSON.parse(fs.readFileSync(jsonFilename));
+    }
+        // SHITSHITvar data = JSON.parse(fs.readFileSync(jsonFilename))
         let userIdsInServer = Object.keys(data)
         let usersInServer = userIdsInServer.map(userId => data[userId].label.toLowerCase())
 
