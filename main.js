@@ -1,10 +1,10 @@
 // Pull in environmental variables
 require("dotenv").config();
 
-// Pull in configuration information
-const { prefix } = require("./config.json");
+
 
 require("moment-timezone");
+
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
@@ -46,31 +46,6 @@ const COLORS = [
     "#abffc4"
     //Mint
 ];
-const DAYLOOKUP = {
-    0: "Sunday",
-    1: "Monday",
-    2: "Tuesday",
-    3: "Wednesday",
-    4: "Thursday",
-    5: "Friday",
-    6: "Saturday"
-};
-var LABELS = [
-    "Sunday", // 0
-    "Monday-AM", // 1
-    "Monday-PM", // 2
-    "Tuesday-AM", // 3
-    "Tuesday-PM", // 4
-    "Wednesday-AM", // 5
-    "Wednesday-PM", //6
-    "Thursday-AM", //7
-    "Thursday-PM", //8
-    "Friday-AM", //9
-    "Friday-PM", //10
-    "Saturday-AM", //11
-    "Saturday-PM" //12
-];
-
 function getLastSunday(d) {
     var t = new Date(d);
     let output = "";
@@ -115,12 +90,12 @@ function removeEmpty(filename) {
     return json;
 }
 
-function makeGraph(json) {
+function makeGraph(json, localization) {
     var moment = require("moment");
     const fs = require("fs");
     const startOfWeek = moment()
         .startOf("week")
-        .format("MM/DD/YYYY");
+        .format(localization.dateFormat);
 
     // Create Initial Canvas
     const { CanvasRenderService } = require("chartjs-node-canvas");
@@ -156,7 +131,7 @@ function makeGraph(json) {
     const configuration = {
         type: "line",
         data: {
-            labels: LABELS,
+            labels: localization.LABELS,
             datasets: dataset
         },
 
@@ -170,7 +145,7 @@ function makeGraph(json) {
                         },
                         scaleLabel: {
                             display: true,
-                            labelString: "Time"
+                            labelString: localization.xScaleLabel
                         }
                     }
                 ],
@@ -182,7 +157,7 @@ function makeGraph(json) {
                         },
                         scaleLabel: {
                             display: true,
-                            labelString: "Bells per Turnip"
+                            labelString: localization.yScaleLabel
                         }
                     }
                 ]
@@ -198,7 +173,7 @@ function makeGraph(json) {
             },
             title: {
                 display: true,
-                text: "Sow Joan's Index - Week of " + startOfWeek
+                text: localization.graphTitle + startOfWeek
             },
             legend: {
                 labels: {
@@ -243,6 +218,24 @@ function _makeNewContributor(author) {
     };
 }
 
+function _makeNewChannel(channelId) {
+    return {
+        language: 'en',
+        prefix: '!',
+        timezone: 'America/New_York'
+    }
+}
+
+function _help(isAdmin, localization, channelPrefix) {
+    var message = "";
+    const possibleLanguages = fs.readdirSync('./localization/').map(filename => filename.split('.')[0])
+    if (isAdmin) {
+        message += localization.adminHelp(channelPrefix, possibleLanguages)
+    } 
+    message += localization.basicHelp(channelPrefix)
+
+    return message
+}
 /**
  * This method writes to the specified JSON file
  * Creating a key if it does not exist.
@@ -252,9 +245,11 @@ function _makeNewContributor(author) {
  * @param {The number the author supplied} value
  * @param {The function you would like to run after the JSON is written} callback
  */
-function writeJson(filename, key, value, day, msg, callback) {
+function writeJson(filename, key, value, day, msg, localization,channelTimezone, callback) {
     var moment = require("moment");
-    const CURRENT_DAY = new Date().getDay();
+    var convertedDate = new Date(moment.utc(new Date(msg.createdAt)).tz(channelTimezone).format())
+
+    const CURRENT_DAY = convertedDate.getDay();
     filename = filename + `-${msg.channel.id}.json`;
 
     try {
@@ -292,51 +287,53 @@ function writeJson(filename, key, value, day, msg, callback) {
 
     // Set data of Inputter
     if (day === "") {
-        day = DAYLOOKUP[CURRENT_DAY];
-        if (new Date(msg.createdTimestamp).getHours() >= 12) {
+        day = localization.DAYLOOKUP[CURRENT_DAY];
+        convertedDate = new Date(moment.utc(new Date(msg.createdAt)).tz(channelTimezone).format())
+        console.log(convertedDate.getHours())
+        if (convertedDate.getHours() >= 12) {
             day += "-PM";
         } else {
             day += "-AM";
         }
-        if (day.includes("Sunday")) {
+        if (day.includes(localization.LABELS[0])) {
             day = day.split("-")[0];
         }
-        dataKey = LABELS.indexOf(day);
+        dataKey = localization.LABELS.indexOf(day);
         json[key].data[dataKey] = value;
     } else {
         json[key].data[day] = value;
-        day = DAYLOOKUP[CURRENT_DAY];
+        day = localization.DAYLOOKUP[CURRENT_DAY];
 
-        if (new Date(msg.createdTimestamp).getHours() >= 12) {
+        if (convertedDate.getHours() >= 12) {
             day += "-PM";
         } else {
             day += "-AM";
         }
-        if (day.includes("Sunday")) {
+        if (day.includes(localization.LABELS[0])) {
             day = day.split("-")[0];
         }
     }
     // let SERVER_DAY_INDEX = LABELS.indexOf(day)
-    let USER_DAY = DAYLOOKUP[new Date(msg.createdTimestamp).getDay()];
+    let USER_DAY = localization.DAYLOOKUP[convertedDate.getDay()];
     let tempDate = new Date();
 
-    let SERVER_DAY_INDEX = DAYLOOKUP[CURRENT_DAY];
+    let SERVER_DAY_INDEX = localization.DAYLOOKUP[CURRENT_DAY];
     if (tempDate.getHours() >= 12) {
         SERVER_DAY_INDEX += "-PM";
     } else {
         SERVER_DAY_INDEX += "-AM";
     }
-    if (SERVER_DAY_INDEX.includes("Sunday")) {
+    if (SERVER_DAY_INDEX.includes(localization.LABELS[0])) {
         SERVER_DAY_INDEX = SERVER_DAY_INDEX.split("-")[0];
     }
 
-    SERVER_DAY_INDEX = LABELS.indexOf(SERVER_DAY_INDEX);
-    if (new Date(msg.createdTimestamp).getHours() >= 12) {
+    SERVER_DAY_INDEX = localization.LABELS.indexOf(SERVER_DAY_INDEX);
+    if (convertedDate.getHours() >= 12) {
         USER_DAY += "-PM";
     } else {
         USER_DAY += "-AM";
     }
-    if (USER_DAY.includes("Sunday")) {
+    if (USER_DAY.includes(localization.LABELS[0])) {
         USER_DAY = USER_DAY.split("-")[0];
     }
 
@@ -344,16 +341,16 @@ function writeJson(filename, key, value, day, msg, callback) {
     fs.writeFileSync(filename, JSON.stringify(json));
     json = removeEmpty(filename);
 
-    makeGraph(json);
+    makeGraph(json, localization);
     const keys = Object.keys(json);
     var max = {
         user: "",
         value: 0
     };
-    if (LABELS.indexOf(USER_DAY) > SERVER_DAY_INDEX) {
-        dataKey = LABELS.indexOf(USER_DAY);
+    if (localization.LABELS.indexOf(USER_DAY) > SERVER_DAY_INDEX) {
+        dataKey = localization.LABELS.indexOf(USER_DAY);
     } else {
-        dataKey = LABELS.indexOf(day);
+        dataKey = localization.LABELS.indexOf(day);
     }
     var currentMax = 0;
     for (let i = 0; i < keys.length; i++) {
@@ -392,106 +389,162 @@ function writeJson(filename, key, value, day, msg, callback) {
             }
         }
     }
-
     callback(max);
 }
+function getChannelInformation(channelId) {
 
+    try {
+        return JSON.parse(fs.readFileSync(`./configs/${channelId}.json`))
+    }
+    catch {
+        fs.writeFileSync(`./configs/${channelId}.json`, JSON.stringify(_makeNewChannel(channelId)))
+        return JSON.parse(fs.readFileSync(`./configs/${channelId}.json`))
+    }
+}
+function deleteMessage(msg) {
+    msg
+        .delete()
+        .then(success => { return success })
+        .catch(error => { return error });
+}
+function printChannelInformation(channelInformation) {
+    return `Language: ${channelInformation.language}\nPrefix: ${channelInformation.prefix}\nTimezone: ${channelInformation.timezone}`
+}
+function deleteBotMessages(msg) {
+
+    msg.channel.messages
+        .fetch()
+        .then(messages =>
+            messages
+                .filter(m => m.author.bot)
+                .map(messager => {
+                    if (messager.id != msg.id) {
+                        deleteMessage(messager)
+                    }
+                })
+        )
+        .catch(err => { return err });
+}
 client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on("message", msg => {
     var moment = require("moment");
-    // let configPrefix = JSON.parse(fs.readFileSync('./config.json'))
-    if (!msg.content.startsWith(prefix) && !msg.author.bot) {
-        msg
-            .delete()
-            .then(success => { return success })
-            .catch(error => { return error });
+    const channelId = msg.channel.id
+    const channelInformation = getChannelInformation(channelId)
+    
+    const channelPrefix = channelInformation.prefix
+    const channelLanguage = channelInformation.language
+    const channelTimezone = channelInformation.timezone
+    const language = require(`./localization/${channelLanguage}.js`)
+    const localization = new language.Localization()
+    var isAdmin = false;
+    try {
+        isAdmin = msg.member.hasPermission("ADMINISTRATOR")
+    }
+    catch {
+        isAdmin = false
+    }
+
+    if (!msg.content.startsWith(channelPrefix) && !msg.author.bot) {
+        deleteMessage(msg)
         return;
     }
 
-    // If the message being sent on the server is a command for the bot
     if (msg.author.bot) {
-        // Checks channel for messages, deletes if not bots prev message
-        msg.channel.messages
-            .fetch()
-            .then(messages =>
-                messages
-                    .filter(m => m.author.bot)
-                    .map(messager => {
-                        if (messager.id != msg.id) {
-                            messager
-                                .delete()
-                                .then(message => { return message }
-                                )
-                                .catch(err => { return err })
-                        }
-                    })
-            )
-            .catch(err => { return err });
+        deleteBotMessages(msg)
         return;
     }
 
     // Args is everything after the command. This is because of shift()
-    const args = msg.content.slice(prefix.length).split(/ +/);
+    const args = msg.content.slice(channelPrefix.length).split(/ +/);
     const command = args.shift().toLowerCase();
 
     // If number is NaN or less than 0
     if ((args[0] === null && isNaN(args[0])) || args[0] <= 0 || args[0] >= 800) {
-        msg
-            .delete()
-            .then(message => {
-                return message
-            })
-            .catch(err => { return err });
+        deleteMessage(msg)
         return;
     }
-
+    if (command === "switch") {
+        if (isAdmin) {
+            var switchOptions = Object.keys(channelInformation)
+            var keySelected = args[0]
+            if (switchOptions.includes(keySelected)) {
+                // If they are choosing language
+                if (args[0] == switchOptions[0]) {
+                    const possibleLanguages = fs.readdirSync('./localization/').map(filename => filename.split('.')[0])
+                    if (possibleLanguages.includes(args[1])) {
+                        channelInformation[keySelected] = args[1]
+                        fs.writeFileSync(`./configs/${channelId}.json`, JSON.stringify(channelInformation))
+                        msg.author.send(printChannelInformation(channelInformation))
+                    } else {
+                        msg.author.send(_help(isAdmin, localization, channelPrefix))
+                    }
+                }
+                else if (args[0] == switchOptions[1]) {
+                    channelInformation[keySelected] = args[1]
+                    fs.writeFileSync(`./configs/${channelId}.json`, JSON.stringify(channelInformation))
+                    msg.author.send(printChannelInformation(channelInformation))
+                }
+                else if (args[0] == switchOptions[2]) {
+                    const possibleTimezones = moment.tz.names()
+                    
+                    if (args[1] && possibleTimezones.includes(args[1].trim())) {
+                        channelInformation[keySelected] = args[1]
+                        fs.writeFileSync(`./configs/${channelId}.json`, JSON.stringify(channelInformation))
+                        msg.author.send(printChannelInformation(channelInformation))
+                    }
+                    else {
+                        msg.author.send(_help(isAdmin, localization, channelPrefix))
+                    }
+                }
+                else {
+                    msg.author.send(_help(isAdmin, localization, channelPrefix))
+                }
+            } else {
+                msg.author.send(_help(isAdmin, localization, channelPrefix))
+            }
+        } else {
+            msg.author.send(_help(isAdmin, localization, channelPrefix))
+        }
+    }
     // If the message being sent on the server is a command for the bot
     if (command === "report") {
-        var AUTHOR = "";
-        if (msg.member.nickname) {
-            AUTHOR = msg.member.nickname;
-        } else {
-            AUTHOR = msg.author.username;
-        }
+        var AUTHOR;
+        msg.member.nickname ? AUTHOR = msg.member.nickname : AUTHOR = msg.author.username
+        var convertedDate = new Date(moment.utc(new Date(msg.createdAt)).tz(channelTimezone).format())
 
         var VALUE = Math.round(Number(args[0]));
-        const CURRENT_DAY = new Date(msg.createdTimestamp).getDay()
+        const CURRENT_DAY = convertedDate.getDay()
         let day = "";
 
         // User specified a time
         if (args.length === 2) {
             day = args[1].toLowerCase();
-            const minLabel = LABELS.map(item => item.toLowerCase());
-
+            const minLabel = localization.LABELS.map(item => item.toLowerCase());
+            console.log(convertedDate)
             // If the day does not have a dash
             if (!day.split("-")[1]) {
-                if (new Date(msg.createdTimestamp).getHours() >= 12) {
+                if (convertedDate.getHours() >= 12) {
                     day += "-pm";
                 } else {
                     day += "-am";
                 }
             }
-            if (day.includes("sunday")) {
+            if (day.includes(localization.LABELS[0].toLowerCase())) {
                 day = day.split("-")[0];
             }
 
             const minTimeIndex = minLabel.indexOf(day);
             if (minTimeIndex === -1) {
-                msg
-                    .delete()
-                    .then(message => { return message }
-                    )
-                    .catch(error => { return error }
-                    );
+                deleteMessage(msg)
                 return;
             }
-            var maxTimeIndex = DAYLOOKUP[CURRENT_DAY] + "-pm";
+            var maxTimeIndex = localization.DAYLOOKUP[CURRENT_DAY] + "-pm";
 
             // Handle the Sunday edge case
-            if (maxTimeIndex.includes("Sunday")) {
+            if (maxTimeIndex.includes(localization.LABELS[0])) {
                 maxTimeIndex = maxTimeIndex.split("-")[0];
             }
 
@@ -499,60 +552,45 @@ client.on("message", msg => {
             if (minTimeIndex <= minLabel.indexOf(maxTimeIndex.toLowerCase())) {
                 day = minTimeIndex;
             } else {
-                msg
-                    .delete()
-                    .then(message => { return message }
-                    )
-                    .catch(error => { return error }
-                    );
+                deleteMessage(msg)
                 return;
             }
         }
         console.log(`${AUTHOR} has sent a report with a value of ${VALUE} at ${new Date(msg.createdTimestamp)}`)
 
-        var jsonFilename =
-            "./json/" +
-            moment()
-                .startOf("week")
-                .format("MM-DD-YYYY");
+        var jsonFilename = `./json/${moment().startOf("week").format("MM-DD-YYYY")}`
 
         // Have sending chart as callback to run sync
-        writeJson(jsonFilename, AUTHOR, VALUE, day, msg, function (max) {
+        writeJson(jsonFilename, AUTHOR, VALUE, day, msg, localization, channelTimezone, function (max) {
+            var convertedDate = new Date(moment.utc(new Date(msg.createdAt)).tz(channelTimezone).format())
 
             // const channel = client.channels.cache.get(process.env.CHANNEL);
             let message = "";
             if (isNaN(VALUE)) {
-                message += `${AUTHOR} removed a listing.`;
+                message += localization.authorDelete(AUTHOR);
             } else {
-                message += `${AUTHOR} just posted ${VALUE} at ${new Date(msg.createdTimestamp).toDateString()}! `;
+                message += localization.newPost(AUTHOR, VALUE, convertedDate)
             }
             if (CURRENT_DAY == 0) {
                 if (max.user === null) {
-                    message += `\nNo one has posted their prices for today!`
+                    message += localization.noPrice()
                 } else {
-                    message += `\nYou can get turnips for ${max.value} from ${max.user}`;
+                    message += localization.maxPrice(max)
 
                 }
 
             } else {
                 if (max.value === 0) {
-                    message += `\nWhat? Turnips are 0 bells!`;
+                    message += localization.noMax()
                 } else {
-                    message += `\n${max.user} is selling turnips for ${max.value} bells!`;
+                    message += localization.hasMax(max)
                 }
             }
 
             msg.channel.send(message, { files: ["./chart.png"] });
         });
         // Delete the user message
-        msg
-            .delete()
-            .then(message => {
-                return message
-            })
-            .catch(error => {
-                return error;
-            });
+        deleteMessage(msg)
         return;
     }
 
@@ -564,13 +602,13 @@ client.on("message", msg => {
                 .startOf("week")
                 .format("MM-DD-YYYY");
         jsonFilename += `-${msg.channel.id}.json`
-            try {
-        var data = JSON.parse(fs.readFileSync(jsonFilename));
-    } catch {
-        fs.writeFileSync(jsonFilename, JSON.stringify({}));
-        var data = JSON.parse(fs.readFileSync(jsonFilename));
-    }
-        // SHITSHITvar data = JSON.parse(fs.readFileSync(jsonFilename))
+        try {
+            var data = JSON.parse(fs.readFileSync(jsonFilename));
+        } catch {
+            fs.writeFileSync(jsonFilename, JSON.stringify({}));
+            var data = JSON.parse(fs.readFileSync(jsonFilename));
+        }
+        // var data = JSON.parse(fs.readFileSync(jsonFilename))
         let userIdsInServer = Object.keys(data)
         let usersInServer = userIdsInServer.map(userId => data[userId].label.toLowerCase())
 
@@ -585,12 +623,8 @@ client.on("message", msg => {
         }
         // If user isn't in the server
         else {
-            msg.author.send(`The user ${args.join(" ")} doesn't exist in that server. Maybe try:\n${usersInServer.join('\n')}`)
-
+            msg.author.send(localization.noUser(args, usersInServer))
         }
-
-
-
     }
     // Experimental history command
     else if (command === "history") {
@@ -606,7 +640,7 @@ client.on("message", msg => {
                 makeGraph(json);
                 msg.author.send("", { files: ["./chart.png"] });
             } catch {
-                msg.author.send(`We don't have data for ${prevWeek}`);
+                msg.author.send(localization.noPrevWeek);
             }
         } else {
             try {
@@ -615,24 +649,13 @@ client.on("message", msg => {
                 makeGraph(json);
                 msg.author.send("", { files: ["./chart.png"] });
             } catch {
-                msg.author.send(`We don't have data for ${args[0]}`);
+                msg.author.send(localization.noData(args))
             }
-            msg.delete()
-                .then(message => {
-                    return message
-                })
-                .catch(error => {
-                    return error
-                })
+            deleteMessage(msg)
         }
 
     }
-    msg
-        .delete()
-        .then(message => { return message }
-        )
-        .catch(error => { return error }
-        );
+    deleteMessage(msg)
     return
 
 
