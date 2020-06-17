@@ -315,7 +315,7 @@ function writeJson(filename, key, value, day, msg, localization,channelTimezone,
     }
     // let SERVER_DAY_INDEX = LABELS.indexOf(day)
     let USER_DAY = localization.DAYLOOKUP[convertedDate.getDay()];
-    let tempDate = new Date();
+    let tempDate = convertedDate;
 
     let SERVER_DAY_INDEX = localization.DAYLOOKUP[CURRENT_DAY];
     if (tempDate.getHours() >= 12) {
