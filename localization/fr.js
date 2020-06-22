@@ -27,13 +27,13 @@ module.exports = {
         this.dateFormat = "DD/MM/YYYY"
         this.xScaleLabel = "Date/Heure"
         this.yScaleLabel = "Clochettes par navet"
-        this.graphTitle = "Sow Joan's Index - Semaine du "
+        this.graphTitle = "Taux des navets - Semaine du "
         this.authorDelete = (author) => `${author} a supprimé une liste.`
-        this.newPost = (author, value, date) => `${author} vient de poster ${value} le ${date.toDateString()}! `;
+        this.newPost = (author, value, date) => `${author} vient de poster un taux de ${value} clochettes le ${date.toDateString()}! `;
         this.noPrice = () => `\nPersonne n'a publié ses taux pour aujourd'hui`
-        this.maxPrice = (max) => `\nVous pouvez obtenir des navets pour ${max.value} par ${max.user}`
+        this.maxPrice = (max) => `\nVous pouvez obtenir des navets pour ${max.value} chez ${max.user}`
         this.noMax = () => `\nQuoi ? Les navets sont à 0 clochettes!`;
-        this.hasMax = (max) => `\n${max.user} vend des navets pour ${max.value} clochettes!`;
+        this.hasMax = (max) => `\n${max.user} a son taux de navets à ${max.value} clochettes!`;
         this.noUser = (args, users) => `L'utilisateur ${args.join(" ")} n'existe pas sur ce serveur. Essayez peut-être:\n${users.join('\n')}`
         this.noPrevWeek = (prevWeek) => `Nous n'avons aucune donnée pour ${prevWeek}`
         this.noData = (args) => `Nous n'avons aucune donnée pour ${args[0]}`
@@ -48,7 +48,7 @@ module.exports = {
 Quelques exemples!
             ${channelPrefix}report 50
             ${channelPrefix}report none
-            ${channelPrefix}report 50 monday-pm
+            ${channelPrefix}report 50 lundi-pm
             ${channelPrefix}graph blaleb
         Vous ne voyez pas une commande que vous aimeriez ou vous avez des suggestions? Rejoignez le Discord pour aider au développement.`
         }
@@ -56,7 +56,7 @@ Quelques exemples!
             return `
                 Langages actuellement disponibles: ${languages}
                 ${channelPrefix}switch <langage|prefix|timezone> <votre langue/prefix/timezone>
-            Pour la liste des timzones acceptés, rendez-vous sur https://momentjs.com/timezone/ , Exemple: America/New_York`
+            Pour la liste des timezones acceptés, rendez-vous sur https://momentjs.com/timezone/ , Exemple: America/New_York`
         }
     }
 }
